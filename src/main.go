@@ -1,7 +1,13 @@
 package main
 
-import "fmt"
+import (
+	"log"
+
+	"github.com/gofiber/fiber/v3"
+)
 
 func main() {
-	fmt.Println("Hello World")
+	app := fiber.New()
+	app.Get("/ping", ping)
+	log.Fatal(app.Listen(":8080"))
 }
