@@ -1,9 +1,9 @@
 package main
 
-import(
-    "google.golang.org/grpc"
-)
+// import(
+//     "google.golang.org/grpc"
+// )
 
-func sendRegistrationData(c *fiber.Ctx) error {
+// func sendRegistrationData(c *fiber.Ctx) error {
     
-}
+// }

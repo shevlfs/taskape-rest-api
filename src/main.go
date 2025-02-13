@@ -3,11 +3,16 @@ package main
 import (
 	"log"
 
-	"github.com/gofiber/fiber/v3"
+	"taskape-rest-api/src/routes"
+
+	"github.com/gofiber/fiber/v2"
 )
 
 func main() {
 	app := fiber.New()
-	app.Get("/ping", ping)
+	handler := routes.New()
+	app.Get("/ping", handler.Ping)
+	app.Post("/sendVerificationCode", handler.VerificationCodeRequestRoute)
+	app.Post("/checkVerificationCode", handler.CheckVerificationCode)
 	log.Fatal(app.Listen(":8080"))
 }
