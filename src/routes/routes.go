@@ -83,13 +83,7 @@ func (h *Handler) CheckVerificationCode(c *fiber.Ctx) error {
 
 	authToken := generateAuthToken(phone)
 
-	cookie := new(fiber.Cookie)
-	cookie.Name = "auth_token"
-	cookie.Value = authToken
-	cookie.HTTPOnly = true
-	cookie.Secure = true
-
-	c.Cookie(cookie)
-
-	return c.SendStatus(200)
+	return c.JSON(fiber.Map{
+		"authToken": authToken,
+	})
 }
