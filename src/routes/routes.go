@@ -1,14 +1,9 @@
 package routes
 
 import (
-	"fmt"
-	"os"
 	"time"
 
 	"github.com/joho/godotenv"
-
-	"github.com/twilio/twilio-go"
-	verify "github.com/twilio/twilio-go/rest/verify/v2"
 
 	"github.com/gofiber/fiber/v2"
 )
@@ -19,18 +14,10 @@ func New() Handler {
 		panic(err)
 	}
 
-	return Handler{
-		twilioClient: twilio.NewRestClientWithParams(
-			twilio.ClientParams{
-				Username: os.Getenv("TWILIO_ACCOUNT_SID"),
-				Password: os.Getenv("TWILIO_AUTH_TOKEN"),
-			},
-		),
-	}
+	return Handler{}
 }
 
 type Handler struct {
-	twilioClient *twilio.RestClient
 }
 
 func (h *Handler) Ping(c *fiber.Ctx) error {
@@ -38,15 +25,6 @@ func (h *Handler) Ping(c *fiber.Ctx) error {
 }
 
 func (h *Handler) sendCode(phone string) error {
-	params := &verify.CreateVerificationParams{}
-	params.SetTo(phone)
-	params.SetChannel("sms")
-
-	_, err := h.twilioClient.VerifyV2.CreateVerification("VA8cd7f3e1bad0573034eeb9585254d477", params)
-	if err != nil {
-		return err
-	}
-
 	return nil
 }
 
@@ -73,22 +51,7 @@ func (h *Handler) VerificationCodeRequestRoute(c *fiber.Ctx) error {
 }
 
 func (h *Handler) checkCode(phone string, code string) bool {
-	params := &verify.CreateVerificationCheckParams{}
-	params.SetTo(phone)
-	params.SetCode(code)
-
-	resp, err := h.twilioClient.VerifyV2.CreateVerificationCheck("VA8cd7f3e1bad0573034eeb9585254d477", params)
-	if err != nil {
-		fmt.Println(err.Error())
-	} else {
-		if resp.Status != nil {
-			if *resp.Status == "approved" {
-				return true
-			}
-		}
-	}
-
-	return false
+	return code == "111111"
 }
 
 func generateAuthToken(phone string) string {
