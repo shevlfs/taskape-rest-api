@@ -1,11 +1,18 @@
 package routes
 
 import (
+	"context"
 	"time"
 
+	"taskape-rest-api/dto"
+
 	"github.com/joho/godotenv"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 
 	"github.com/gofiber/fiber/v2"
+
+	pb "taskape-rest-api/proto"
 )
 
 func New() Handler {
@@ -14,10 +21,18 @@ func New() Handler {
 		panic(err)
 	}
 
-	return Handler{}
+	conn, err := grpc.NewClient("localhost:50051", grpc.WithTransportCredentials(insecure.NewCredentials()))
+
+	if err != nil {
+		panic(err)
+	}
+
+	client := pb.NewBackendRequestsClient(conn)
+	return Handler{BackendRequestsClient: client}
 }
 
 type Handler struct {
+	pb.BackendRequestsClient
 }
 
 func (h *Handler) Ping(c *fiber.Ctx) error {
@@ -28,12 +43,12 @@ func (h *Handler) sendCode(phone string) error {
 	return nil
 }
 
-type Request struct {
-	Phone string `json:"phone"`
-}
+// func (h *Handler) RegisterNewUser(c *fiber.Ctx) error {
+
+// }
 
 func (h *Handler) VerificationCodeRequestRoute(c *fiber.Ctx) error {
-	var request Request
+	var request dto.PhoneVerificationRequest
 	if err := c.BodyParser(&request); err != nil {
 		return c.Status(fiber.StatusBadRequest).SendString(err.Error())
 	}
@@ -54,17 +69,16 @@ func (h *Handler) checkCode(phone string, code string) bool {
 	return code == "111111"
 }
 
-func generateAuthToken(phone string) string {
-	return "mock-auth-token-for-" + phone
-}
-
-type CheckRequest struct {
-	Phone string `json:"phone"`
-	Code  string `json:"code"`
+func (h *Handler) getAuthToken(phone string) string {
+	response, err := h.BackendRequestsClient.LoginUser(context.Background(), &pb.UserLoginRequest{Phone: phone})
+	if err != nil {
+		return ""
+	}
+	return response.Token
 }
 
 func (h *Handler) CheckVerificationCode(c *fiber.Ctx) error {
-	var request CheckRequest
+	var request dto.CheckCodeRequest
 
 	if err := c.BodyParser(&request); err != nil {
 		return c.Status(fiber.StatusBadRequest).SendString(err.Error())
@@ -81,7 +95,9 @@ func (h *Handler) CheckVerificationCode(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).SendString("Invalid code")
 	}
 
-	authToken := generateAuthToken(phone)
+	authToken := h.getAuthToken(phone)
+
+	println("code accepted for " + phone)
 
 	return c.JSON(fiber.Map{
 		"authToken": authToken,

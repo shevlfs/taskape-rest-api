@@ -3,7 +3,7 @@ package main
 import (
 	"log"
 
-	"taskape-rest-api/src/routes"
+	"taskape-rest-api/routes"
 
 	"github.com/gofiber/fiber/v2"
 )
