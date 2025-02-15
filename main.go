@@ -13,6 +13,9 @@ func main() {
 	handler := routes.New()
 	app.Get("/ping", handler.Ping)
 	app.Post("/sendVerificationCode", handler.VerificationCodeRequestRoute)
+	app.Post("/validateToken", handler.VerifyUserToken)
+	app.Post("/refreshToken", handler.RefreshToken)
+	app.Post("/sendVerificationCode", handler.VerificationCodeRequestRoute)
 	app.Post("/checkVerificationCode", handler.CheckVerificationCode)
 	log.Fatal(app.Listen(":8080"))
 }
