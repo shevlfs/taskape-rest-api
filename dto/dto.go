@@ -1,13 +1,5 @@
 package dto
 
-type RegisterNewProfileRequest struct {
-	ProfilePicture string `json:"profile_picture"`
-	Handle         string `json:"handle"`
-	Bio            string `json:"bio"`
-	Phone          string `json:"phone"`
-	Token          string `json:"auth_token"`
-}
-
 type PhoneVerificationRequest struct {
 	Phone string `json:"phone"`
 }
@@ -25,4 +17,13 @@ type RefreshTokenRequest struct {
 	Token        string `json:"token"`
 	RefreshToken string `json:"refresh_token"`
 	Phone        string `json:"phone"`
+}
+
+type RegisterNewProfileRequest struct {
+	Handle         string `json:"handle"`
+	Bio            string `json:"bio"`
+	Color          string `json:"color"`
+	ProfilePicture string `json:"profile_picture"`
+	Phone          string `json:"phone"`
+	Token          string `json:"token"`
 }

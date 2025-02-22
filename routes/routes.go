@@ -9,6 +9,7 @@ import (
 	"github.com/joho/godotenv"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/grpc/metadata"
 
 	"github.com/gofiber/fiber/v2"
 
@@ -26,6 +27,8 @@ func New() Handler {
 	if err != nil {
 		panic(err)
 	}
+
+	conn.Connect()
 
 	client := pb.NewBackendRequestsClient(conn)
 	return Handler{BackendRequestsClient: client}
@@ -62,6 +65,8 @@ func (h *Handler) VerificationCodeRequestRoute(c *fiber.Ctx) error {
 }
 
 func (h *Handler) checkCode(phone string, code string) bool {
+	// gotta move this function & other twilio things to a separate package
+	// not doing this right now because this branch is not connected to twilio
 	return code == "111111"
 }
 
@@ -157,5 +162,39 @@ func (h *Handler) RefreshToken(c *fiber.Ctx) error {
 	return c.JSON(fiber.Map{
 		"authToken":    resp.Token,
 		"refreshToken": resp.RefreshToken,
+	})
+}
+
+func (h *Handler) RegisterNewProfile(c *fiber.Ctx) error {
+	var request dto.RegisterNewProfileRequest
+	if err := c.BodyParser(&request); err != nil {
+		return c.Status(fiber.StatusBadRequest).SendString(err.Error())
+	}
+	if request.Phone == "" || request.Token == "" {
+		return c.Status(fiber.StatusBadRequest).SendString("Phone and token are required")
+	}
+
+	ctx := context.Background()
+	md := metadata.New(map[string]string{
+		"authorization": request.Token,
+	})
+	ctx = metadata.NewOutgoingContext(ctx, md)
+
+	response, err := h.BackendRequestsClient.RegisterNewProfile(ctx, &pb.RegisterNewProfileRequest{
+		Handle:         request.Handle,
+		Bio:            request.Bio,
+		Color:          request.Color,
+		ProfilePicture: request.ProfilePicture,
+		Phone:          request.Phone,
+	})
+
+	if err != nil {
+		print("error: " + err.Error())
+		return c.Status(fiber.StatusInternalServerError).SendString(err.Error())
+	}
+
+	return c.JSON(fiber.Map{
+		"success": response.Success,
+		"id":      response.Id,
 	})
 }

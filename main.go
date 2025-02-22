@@ -17,5 +17,6 @@ func main() {
 	app.Post("/refreshToken", handler.RefreshToken)
 	app.Post("/sendVerificationCode", handler.VerificationCodeRequestRoute)
 	app.Post("/checkVerificationCode", handler.CheckVerificationCode)
+	app.Post("/registerNewProfile", handler.RegisterNewProfile)
 	log.Fatal(app.Listen(":8080"))
 }
