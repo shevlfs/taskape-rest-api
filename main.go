@@ -18,5 +18,11 @@ func main() {
 	app.Post("/sendVerificationCode", handler.VerificationCodeRequestRoute)
 	app.Post("/checkVerificationCode", handler.CheckVerificationCode)
 	app.Post("/registerNewProfile", handler.RegisterNewProfile)
+	app.Post("/submitTask", handler.SubmitTask)
+	app.Post("/submitTasksBatch", handler.SubmitTasksBatch)
+
+	app.Post("/submitTask", handler.SubmitTask)
+    app.Post("/submitTasksBatch", handler.SubmitTasksBatch)
+    app.Get("/users/:userID/tasks", handler.GetUserTasks)
 	log.Fatal(app.Listen(":8080"))
 }
