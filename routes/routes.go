@@ -137,6 +137,62 @@ func (h *Handler) VerifyUserToken(c *fiber.Ctx) error {
 	}
 }
 
+func (h *Handler) CheckHandleAvailability(c *fiber.Ctx) error {
+	var request dto.CheckHandleRequest
+	if err := c.BodyParser(&request); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(dto.CheckHandleResponse{
+			Available: false,
+			Message:   "Invalid request format: " + err.Error(),
+		})
+	}
+
+	if request.Handle == "" {
+		return c.Status(fiber.StatusBadRequest).JSON(dto.CheckHandleResponse{
+			Available: false,
+			Message:   "Handle is required",
+		})
+	}
+	ctx := context.Background()
+	md := metadata.New(map[string]string{
+		"authorization": request.Token,
+	})
+	ctx = metadata.NewOutgoingContext(ctx, md)
+
+	if request.Token == "" {
+		return c.Status(fiber.StatusBadRequest).JSON(dto.CheckHandleResponse{
+			Available: false,
+			Message:   "Token is required",
+		})
+	}
+
+	handle := request.Handle
+	if handle[0] == '@' {
+		handle = handle[1:]
+	}
+
+	resp, err := h.BackendRequestsClient.CheckHandleAvailability(ctx, &pb.CheckHandleRequest{
+		Handle: handle,
+	})
+
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(dto.CheckHandleResponse{
+			Available: false,
+			Message:   "Failed to check handle availability: " + err.Error(),
+		})
+	}
+
+	if !resp.Available {
+		return c.Status(fiber.StatusOK).JSON(dto.CheckHandleResponse{
+			Available: false,
+			Message:   "Handle is already taken",
+		})
+	}
+	return c.Status(fiber.StatusOK).JSON(dto.CheckHandleResponse{
+		Available: true,
+		Message:   "Handle is available",
+	})
+}
+
 func (h *Handler) RefreshToken(c *fiber.Ctx) error {
 	var request dto.RefreshTokenRequest
 

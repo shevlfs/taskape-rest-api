@@ -24,5 +24,8 @@ func main() {
 	app.Post("/submitTask", handler.SubmitTask)
     app.Post("/submitTasksBatch", handler.SubmitTasksBatch)
     app.Get("/users/:userID/tasks", handler.GetUserTasks)
+
+	app.Post("/checkHandleAvailability", handler.CheckHandleAvailability)
+	
 	log.Fatal(app.Listen(":8080"))
 }

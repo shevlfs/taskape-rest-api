@@ -22,6 +22,16 @@ type TaskSubmissionResponse struct {
 	Message string `json:"message,omitempty"`
 }
 
+type CheckHandleRequest struct {
+	Handle string `json:"handle"`
+	Token  string `json:"token"`
+}
+
+type CheckHandleResponse struct {
+	Available bool   `json:"available"`
+	Message   string `json:"message,omitempty"`
+}
+
 type TaskResponse struct {
 	ID               string   `json:"id"`
 	UserID           string   `json:"user_id"`
