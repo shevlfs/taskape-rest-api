@@ -272,8 +272,16 @@ func (h *Handler) SubmitTask(c *fiber.Ctx) error {
 	})
 }
 
+func getStringValue(ptr *string) string {
+	if ptr == nil {
+		return ""
+	}
+	return *ptr
+}
+
 func (h *Handler) SubmitTasksBatch(c *fiber.Ctx) error {
 	var request dto.BatchTaskSubmissionRequest
+	println("receiving tasks from client")
 	if err := c.BodyParser(&request); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(dto.BatchTaskSubmissionResponse{
 			Success: false,
@@ -315,8 +323,8 @@ func (h *Handler) SubmitTasksBatch(c *fiber.Ctx) error {
 			Description:    taskSubmission.Description,
 			Deadline:       deadlineProto,
 			Author:         taskSubmission.Author,
-			Group:          *taskSubmission.Group,
-			GroupId:        *taskSubmission.GroupID,
+			Group:          getStringValue(taskSubmission.Group),
+			GroupId:        getStringValue(taskSubmission.GroupID),
 			AssignedTo:     taskSubmission.AssignedTo,
 			TaskDifficulty: taskSubmission.Difficulty,
 			CustomHours:    customHours,
