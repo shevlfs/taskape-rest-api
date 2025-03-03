@@ -32,6 +32,17 @@ type CheckHandleResponse struct {
 	Message   string `json:"message,omitempty"`
 }
 
+type GetUserResponse struct {
+    Success        bool   `json:"success"`
+    Id             string `json:"id"`
+    Handle         string `json:"handle"`
+    Bio            string `json:"bio"`
+    ProfilePicture string `json:"profile_picture"`
+    Color          string `json:"color"`
+    Error          string `json:"error,omitempty"`
+}
+
+
 type TaskResponse struct {
 	ID               string   `json:"id"`
 	UserID           string   `json:"user_id"`

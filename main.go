@@ -22,10 +22,11 @@ func main() {
 	app.Post("/submitTasksBatch", handler.SubmitTasksBatch)
 
 	app.Post("/submitTask", handler.SubmitTask)
-    app.Post("/submitTasksBatch", handler.SubmitTasksBatch)
-    app.Get("/users/:userID/tasks", handler.GetUserTasks)
+	app.Post("/submitTasksBatch", handler.SubmitTasksBatch)
+	app.Get("/users/:userID/tasks", handler.GetUserTasks)
+	app.Get("/users/:userID", handler.GetUser)
 
 	app.Post("/checkHandleAvailability", handler.CheckHandleAvailability)
-	
+
 	log.Fatal(app.Listen(":8080"))
 }

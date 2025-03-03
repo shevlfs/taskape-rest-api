@@ -73,13 +73,13 @@ func (h *Handler) checkCode(phone string, code string) bool {
 	return code == "111111"
 }
 
-func (h *Handler) getAuthTokens(phone string) (string, string, bool) {
+func (h *Handler) getAuthTokens(phone string) (string, string, bool, int64) {
 	response, err := h.BackendRequestsClient.LoginNewUser(context.Background(), &pb.NewUserLoginRequest{Phone: phone})
 	if err != nil {
 		print(err)
-		return "", "", false
+		return "", "", false, -1
 	}
-	return response.Token, response.RefreshToken, response.ProfileExists
+	return response.Token, response.RefreshToken, response.ProfileExists, response.UserId
 }
 
 func (h *Handler) CheckVerificationCode(c *fiber.Ctx) error {
@@ -100,7 +100,7 @@ func (h *Handler) CheckVerificationCode(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).SendString("Invalid code")
 	}
 
-	authToken, refreshToken, profileExists := h.getAuthTokens(phone)
+	authToken, refreshToken, profileExists, userId := h.getAuthTokens(phone)
 
 	println("code accepted & tokens given out to " + phone)
 
@@ -108,6 +108,58 @@ func (h *Handler) CheckVerificationCode(c *fiber.Ctx) error {
 		"authToken":     authToken,
 		"refreshToken":  refreshToken,
 		"profileExists": profileExists,
+		"userId":        userId,
+	})
+}
+
+func (h *Handler) GetUser(c *fiber.Ctx) error {
+	userID := c.Params("userID")
+	if userID == "" {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"success": false,
+			"error":   "User ID is required",
+		})
+	}
+
+	token := c.Get("Authorization")
+	if token == "" {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+			"success": false,
+			"error":   "Authorization token is required",
+		})
+	}
+
+	ctx := context.Background()
+	md := metadata.New(map[string]string{
+		"authorization": token,
+	})
+	ctx = metadata.NewOutgoingContext(ctx, md)
+
+	resp, err := h.BackendRequestsClient.GetUser(ctx, &pb.GetUserRequest{
+		UserId: userID,
+	})
+
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"success": false,
+			"error":   "Failed to fetch user: " + err.Error(),
+		})
+	}
+
+	if !resp.Success {
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+			"success": false,
+			"error":   resp.Error,
+		})
+	}
+
+	return c.Status(fiber.StatusOK).JSON(dto.GetUserResponse{
+		Success:        true,
+		Id:             resp.Id,
+		Handle:         resp.Handle,
+		Bio:            resp.Bio,
+		ProfilePicture: resp.ProfilePicture,
+		Color:          resp.Color,
 	})
 }
 
