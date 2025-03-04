@@ -3,6 +3,7 @@ package routes
 import (
 	"context"
 	"fmt"
+	"log"
 	"time"
 
 	"taskape-rest-api/dto"
@@ -152,6 +153,7 @@ func (h *Handler) GetUser(c *fiber.Ctx) error {
 			"error":   resp.Error,
 		})
 	}
+	println("giving out user ", resp.Handle, resp.Color)
 
 	return c.Status(fiber.StatusOK).JSON(dto.GetUserResponse{
 		Success:        true,
@@ -472,6 +474,7 @@ func (h *Handler) GetUserTasks(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"success": false,
 			"message": "User ID is required",
+			"tasks":   []interface{}{},
 		})
 	}
 
@@ -480,6 +483,7 @@ func (h *Handler) GetUserTasks(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 			"success": false,
 			"message": "Authorization token is required",
+			"tasks":   []interface{}{},
 		})
 	}
 
@@ -494,13 +498,24 @@ func (h *Handler) GetUserTasks(c *fiber.Ctx) error {
 	})
 
 	if err != nil {
+		log.Printf("gRPC error in GetUserTasks: %v", err)
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"success": false,
 			"message": "Failed to fetch tasks: " + err.Error(),
+			"tasks":   []interface{}{},
 		})
 	}
 
-	tasks := make([]dto.TaskResponse, len(resp.Tasks))
+	if !resp.Success {
+		log.Printf("Business error in GetUserTasks: %s", resp.Error)
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"success": false,
+			"message": resp.Error,
+			"tasks":   []interface{}{},
+		})
+	}
+
+	tasks := make([]map[string]interface{}, len(resp.Tasks))
 	for i, task := range resp.Tasks {
 		var deadline *string
 		if task.Deadline != nil {
@@ -508,28 +523,30 @@ func (h *Handler) GetUserTasks(c *fiber.Ctx) error {
 			deadline = &deadlineStr
 		}
 
-		tasks[i] = dto.TaskResponse{
-			ID:               task.Id,
-			UserID:           task.UserId,
-			Name:             task.Name,
-			Description:      task.Description,
-			CreatedAt:        task.CreatedAt.AsTime().Format(time.RFC3339),
-			Deadline:         deadline,
-			Author:           task.Author,
-			Group:            task.Group,
-			GroupID:          task.GroupId,
-			AssignedTo:       task.AssignedTo,
-			TaskDifficulty:   task.TaskDifficulty,
-			CustomHours:      int(task.CustomHours),
-			IsCompleted:      task.Completion.IsCompleted,
-			ProofURL:         task.Completion.ProofUrl,
-			PrivacyLevel:     task.Privacy.Level,
-			PrivacyExceptIDs: task.Privacy.ExceptIds,
+		// Use a map to ensure all expected fields are present
+		tasks[i] = map[string]interface{}{
+			"id":                 task.Id,
+			"user_id":            task.UserId,
+			"name":               task.Name,
+			"description":        task.Description,
+			"created_at":         task.CreatedAt.AsTime().Format(time.RFC3339),
+			"deadline":           deadline,
+			"author":             task.Author,
+			"group":              task.Group,
+			"group_id":           task.GroupId,
+			"assigned_to":        task.AssignedTo,
+			"task_difficulty":    task.TaskDifficulty,
+			"custom_hours":       task.CustomHours,
+			"is_completed":       task.Completion.IsCompleted,
+			"proof_url":          task.Completion.ProofUrl,
+			"privacy_level":      task.Privacy.Level,
+			"privacy_except_ids": task.Privacy.ExceptIds,
 		}
 	}
 
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{
 		"success": true,
 		"tasks":   tasks,
+		"message": nil,
 	})
 }
