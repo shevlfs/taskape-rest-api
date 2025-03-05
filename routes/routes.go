@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"os"
 	"time"
 
 	"taskape-rest-api/dto"
@@ -23,7 +24,12 @@ import (
 func New() Handler {
 	err := godotenv.Load()
 	if err != nil {
-		panic(err)
+		log.Println("Warning: Error loading .env file:", err)
+	}
+
+	backendHost := os.Getenv("BACKEND_HOST")
+	if backendHost == "" {
+		backendHost = "localhost:50051"
 	}
 
 	conn, err := grpc.NewClient("localhost:50051", grpc.WithTransportCredentials(insecure.NewCredentials()))

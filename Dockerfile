@@ -20,8 +20,8 @@ WORKDIR /app
 
 # Copy the binary from builder
 COPY --from=builder /app/taskape-rest-api .
-# Copy .env file
-COPY .env .
+# Copy .env file for configuration
+COPY .env ./
 
 # Expose port
 EXPOSE 8080
