@@ -11,7 +11,7 @@ RUN go mod download
 COPY . .
 
 # Build the REST API
-RUN go build -o taskape-rest-api .
+RUN go build -mod=vendor -o taskape-rest-api .
 
 # --- Final stage ---
 FROM alpine:latest
