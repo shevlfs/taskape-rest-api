@@ -33,15 +33,14 @@ type CheckHandleResponse struct {
 }
 
 type GetUserResponse struct {
-    Success        bool   `json:"success"`
-    Id             string `json:"id"`
-    Handle         string `json:"handle"`
-    Bio            string `json:"bio"`
-    ProfilePicture string `json:"profile_picture"`
-    Color          string `json:"color"`
-    Error          string `json:"error,omitempty"`
+	Success        bool   `json:"success"`
+	Id             string `json:"id"`
+	Handle         string `json:"handle"`
+	Bio            string `json:"bio"`
+	ProfilePicture string `json:"profile_picture"`
+	Color          string `json:"color"`
+	Error          string `json:"error,omitempty"`
 }
-
 
 type TaskResponse struct {
 	ID               string   `json:"id"`
@@ -114,4 +113,26 @@ type RegisterNewProfileRequest struct {
 	ProfilePicture string `json:"profile_picture"`
 	Phone          string `json:"phone"`
 	Token          string `json:"token"`
+}
+
+type TaskUpdateRequest struct {
+	ID               string   `json:"id"`
+	UserID           string   `json:"user_id"`
+	Name             string   `json:"name"`
+	Description      string   `json:"description"`
+	Deadline         *string  `json:"deadline"`
+	AssignedTo       []string `json:"assigned_to"`
+	Difficulty       string   `json:"difficulty"`
+	CustomHours      *int     `json:"custom_hours"`
+	IsCompleted      bool     `json:"is_completed"`
+	ProofURL         string   `json:"proof_url"`
+	PrivacyLevel     string   `json:"privacy_level"`
+	PrivacyExceptIDs []string `json:"privacy_except_ids"`
+	Token            string   `json:"token"`
+}
+
+// TaskUpdateResponse represents the response for a task update request
+type TaskUpdateResponse struct {
+	Success bool   `json:"success"`
+	Message string `json:"message,omitempty"`
 }

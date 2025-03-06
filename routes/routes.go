@@ -171,6 +171,76 @@ func (h *Handler) GetUser(c *fiber.Ctx) error {
 	})
 }
 
+func (h *Handler) UpdateTask(c *fiber.Ctx) error {
+	var request dto.TaskUpdateRequest
+	if err := c.BodyParser(&request); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(dto.TaskUpdateResponse{
+			Success: false,
+			Message: "Invalid request format: " + err.Error(),
+		})
+	}
+
+	ctx := context.Background()
+	md := metadata.New(map[string]string{
+		"authorization": request.Token,
+	})
+	ctx = metadata.NewOutgoingContext(ctx, md)
+
+	var deadlineProto *timestamppb.Timestamp
+	if request.Deadline != nil && *request.Deadline != "" {
+		deadline, err := time.Parse(time.RFC3339, *request.Deadline)
+		if err != nil {
+			return c.Status(fiber.StatusBadRequest).JSON(dto.TaskUpdateResponse{
+				Success: false,
+				Message: "Invalid deadline format: " + err.Error(),
+			})
+		}
+		deadlineProto = timestamppb.New(deadline)
+	}
+
+	task := &pb.Task{
+		Id:             request.ID,
+		UserId:         request.UserID,
+		Name:           request.Name,
+		Description:    request.Description,
+		Deadline:       deadlineProto,
+		AssignedTo:     request.AssignedTo,
+		TaskDifficulty: request.Difficulty,
+		CustomHours:    int32(*request.CustomHours),
+		Completion: &pb.CompletionStatus{
+			IsCompleted: request.IsCompleted,
+			ProofUrl:    request.ProofURL,
+		},
+		Privacy: &pb.PrivacySettings{
+			Level:     request.PrivacyLevel,
+			ExceptIds: request.PrivacyExceptIDs,
+		},
+	}
+
+	resp, err := h.BackendRequestsClient.UpdateTask(ctx, &pb.UpdateTaskRequest{
+		Task: task,
+	})
+
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(dto.TaskUpdateResponse{
+			Success: false,
+			Message: "Failed to update task: " + err.Error(),
+		})
+	}
+
+	if !resp.Success {
+		return c.Status(fiber.StatusInternalServerError).JSON(dto.TaskUpdateResponse{
+			Success: false,
+			Message: resp.Error,
+		})
+	}
+
+	return c.Status(fiber.StatusOK).JSON(dto.TaskUpdateResponse{
+		Success: true,
+		Message: "Task updated successfully",
+	})
+}
+
 func (h *Handler) VerifyUserToken(c *fiber.Ctx) error {
 	var request dto.VerifyTokenRequest
 
