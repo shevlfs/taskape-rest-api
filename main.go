@@ -28,7 +28,7 @@ func main() {
 
 	app.Post("/checkHandleAvailability", handler.CheckHandleAvailability)
 
-	app.Put("/updateTask", handler.UpdateTask)
+	app.Post("/updateTask", handler.UpdateTask)
 
 	log.Fatal(app.Listen(":8080"))
 }
