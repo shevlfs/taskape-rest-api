@@ -172,6 +172,7 @@ func (h *Handler) GetUser(c *fiber.Ctx) error {
 }
 
 func (h *Handler) UpdateTask(c *fiber.Ctx) error {
+	println("got update task request")
 	var request dto.TaskUpdateRequest
 	if err := c.BodyParser(&request); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(dto.TaskUpdateResponse{
