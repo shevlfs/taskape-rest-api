@@ -207,7 +207,7 @@ func (h *Handler) UpdateTask(c *fiber.Ctx) error {
 		Deadline:       deadlineProto,
 		AssignedTo:     request.AssignedTo,
 		TaskDifficulty: request.Difficulty,
-		CustomHours:    int32(*request.CustomHours),
+		CustomHours:    0,
 		Completion: &pb.CompletionStatus{
 			IsCompleted: request.IsCompleted,
 			ProofUrl:    request.ProofURL,
