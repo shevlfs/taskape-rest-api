@@ -187,6 +187,11 @@ func (h *Handler) UpdateTask(c *fiber.Ctx) error {
 	})
 	ctx = metadata.NewOutgoingContext(ctx, md)
 
+	var customHours int32
+	if request.CustomHours != nil {
+		customHours = int32(*request.CustomHours)
+	}
+
 	var deadlineProto *timestamppb.Timestamp
 	if request.Deadline != nil && *request.Deadline != "" {
 		deadline, err := time.Parse(time.RFC3339, *request.Deadline)
@@ -207,7 +212,7 @@ func (h *Handler) UpdateTask(c *fiber.Ctx) error {
 		Deadline:       deadlineProto,
 		AssignedTo:     request.AssignedTo,
 		TaskDifficulty: request.Difficulty,
-		CustomHours:    0,
+		CustomHours:    customHours,
 		Completion: &pb.CompletionStatus{
 			IsCompleted: request.IsCompleted,
 			ProofUrl:    request.ProofURL,
