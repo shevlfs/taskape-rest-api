@@ -204,13 +204,27 @@ func (h *Handler) UpdateTask(c *fiber.Ctx) error {
 		deadlineProto = timestamppb.New(deadline)
 	}
 
+	var assignedTo []string
+	if request.AssignedTo == nil {
+		assignedTo = []string{} // Empty array instead of nil
+	} else {
+		assignedTo = request.AssignedTo
+	}
+
+	var privacyExceptIds []string
+	if request.PrivacyExceptIDs == nil {
+		privacyExceptIds = []string{} // Empty array instead of nil
+	} else {
+		privacyExceptIds = request.PrivacyExceptIDs
+	}
+
 	task := &pb.Task{
 		Id:             request.ID,
 		UserId:         request.UserID,
 		Name:           request.Name,
 		Description:    request.Description,
 		Deadline:       deadlineProto,
-		AssignedTo:     request.AssignedTo,
+		AssignedTo:     assignedTo,
 		TaskDifficulty: request.Difficulty,
 		CustomHours:    customHours,
 		Completion: &pb.CompletionStatus{
@@ -219,7 +233,7 @@ func (h *Handler) UpdateTask(c *fiber.Ctx) error {
 		},
 		Privacy: &pb.PrivacySettings{
 			Level:     request.PrivacyLevel,
-			ExceptIds: request.PrivacyExceptIDs,
+			ExceptIds: privacyExceptIds,
 		},
 	}
 
