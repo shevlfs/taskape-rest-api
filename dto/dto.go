@@ -67,6 +67,7 @@ type BatchTaskSubmissionRequest struct {
 }
 
 type TaskSubmission struct {
+	Id               string   `json:"id"`
 	UserID           string   `json:"user_id"`
 	Name             string   `json:"name"`
 	Description      string   `json:"description"`

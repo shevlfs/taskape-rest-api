@@ -523,7 +523,7 @@ func (h *Handler) SubmitTasksBatch(c *fiber.Ctx) error {
 		}
 
 		tasks[i] = &pb.Task{
-			Id:             uuid.New().String(),
+			Id:             taskSubmission.Id,
 			UserId:         taskSubmission.UserID,
 			Name:           taskSubmission.Name,
 			Description:    taskSubmission.Description,
