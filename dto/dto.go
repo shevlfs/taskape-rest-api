@@ -13,6 +13,10 @@ type TaskSubmissionRequest struct {
 	CustomHours      *int     `json:"custom_hours"`
 	PrivacyLevel     string   `json:"privacy_level"`
 	PrivacyExceptIDs []string `json:"privacy_except_ids"`
+	FlagStatus       bool     `json:"flag_status"`
+	FlagColor        *string  `json:"flag_color"`
+	FlagName         *string  `json:"flag_name"`
+	DisplayOrder     int      `json:"display_order"`
 	Token            string   `json:"token"`
 }
 
@@ -42,25 +46,6 @@ type GetUserResponse struct {
 	Error          string `json:"error,omitempty"`
 }
 
-type TaskResponse struct {
-	ID               string   `json:"id"`
-	UserID           string   `json:"user_id"`
-	Name             string   `json:"name"`
-	Description      string   `json:"description"`
-	CreatedAt        string   `json:"created_at"`
-	Deadline         *string  `json:"deadline,omitempty"`
-	Author           string   `json:"author"`
-	Group            string   `json:"group,omitempty"`
-	GroupID          string   `json:"group_id,omitempty"`
-	AssignedTo       []string `json:"assigned_to"`
-	TaskDifficulty   string   `json:"task_difficulty"`
-	CustomHours      int      `json:"custom_hours,omitempty"`
-	IsCompleted      bool     `json:"is_completed"`
-	ProofURL         string   `json:"proof_url,omitempty"`
-	PrivacyLevel     string   `json:"privacy_level"`
-	PrivacyExceptIDs []string `json:"privacy_except_ids"`
-}
-
 type BatchTaskSubmissionRequest struct {
 	Tasks []TaskSubmission `json:"tasks"`
 	Token string           `json:"token"`
@@ -80,6 +65,10 @@ type TaskSubmission struct {
 	CustomHours      *int     `json:"custom_hours"`
 	PrivacyLevel     string   `json:"privacy_level"`
 	PrivacyExceptIDs []string `json:"privacy_except_ids"`
+	FlagStatus       bool     `json:"flag_status"`
+	FlagColor        *string  `json:"flag_color"`
+	FlagName         *string  `json:"flag_name"`
+	DisplayOrder     int      `json:"display_order"`
 }
 
 type BatchTaskSubmissionResponse struct {
@@ -129,11 +118,54 @@ type TaskUpdateRequest struct {
 	ProofURL         string   `json:"proof_url"`
 	PrivacyLevel     string   `json:"privacy_level"`
 	PrivacyExceptIDs []string `json:"privacy_except_ids"`
+	FlagStatus       bool     `json:"flag_status"`
+	FlagColor        *string  `json:"flag_color"`
+	FlagName         *string  `json:"flag_name"`
+	DisplayOrder     int      `json:"display_order"`
 	Token            string   `json:"token"`
+}
+
+type TaskResponse struct {
+	ID               string   `json:"id"`
+	UserID           string   `json:"user_id"`
+	Name             string   `json:"name"`
+	Description      string   `json:"description"`
+	CreatedAt        string   `json:"created_at"`
+	Deadline         *string  `json:"deadline,omitempty"`
+	Author           string   `json:"author"`
+	Group            string   `json:"group,omitempty"`
+	GroupID          string   `json:"group_id,omitempty"`
+	AssignedTo       []string `json:"assigned_to"`
+	TaskDifficulty   string   `json:"task_difficulty"`
+	CustomHours      int      `json:"custom_hours,omitempty"`
+	IsCompleted      bool     `json:"is_completed"`
+	ProofURL         string   `json:"proof_url,omitempty"`
+	PrivacyLevel     string   `json:"privacy_level"`
+	PrivacyExceptIDs []string `json:"privacy_except_ids"`
+	FlagStatus       bool     `json:"flag_status"`
+	FlagColor        *string  `json:"flag_color,omitempty"`
+	FlagName         *string  `json:"flag_name,omitempty"`
+	DisplayOrder     int      `json:"display_order"`
 }
 
 // TaskUpdateResponse represents the response for a task update request
 type TaskUpdateResponse struct {
+	Success bool   `json:"success"`
+	Message string `json:"message,omitempty"`
+}
+
+type TaskOrderUpdateRequest struct {
+	UserID string          `json:"user_id"`
+	Tasks  []TaskOrderItem `json:"tasks"`
+	Token  string          `json:"token"`
+}
+
+type TaskOrderItem struct {
+	TaskID       string `json:"task_id"`
+	DisplayOrder int    `json:"display_order"`
+}
+
+type TaskOrderUpdateResponse struct {
 	Success bool   `json:"success"`
 	Message string `json:"message,omitempty"`
 }

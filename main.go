@@ -30,5 +30,7 @@ func main() {
 
 	app.Post("/updateTask", handler.UpdateTask)
 
+	app.Post("/updateTaskOrder", handler.UpdateTaskOrder)
+
 	log.Fatal(app.Listen(":8080"))
 }

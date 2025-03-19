@@ -170,6 +170,54 @@ func (h *Handler) GetUser(c *fiber.Ctx) error {
 		Color:          resp.Color,
 	})
 }
+func (h *Handler) UpdateTaskOrder(c *fiber.Ctx) error {
+	var request dto.TaskOrderUpdateRequest
+	if err := c.BodyParser(&request); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(dto.TaskOrderUpdateResponse{
+			Success: false,
+			Message: "Invalid request format: " + err.Error(),
+		})
+	}
+
+	ctx := context.Background()
+	md := metadata.New(map[string]string{
+		"authorization": request.Token,
+	})
+	ctx = metadata.NewOutgoingContext(ctx, md)
+
+	// Convert to gRPC request
+	taskOrderItems := make([]*pb.TaskOrderItem, len(request.Tasks))
+	for i, item := range request.Tasks {
+		taskOrderItems[i] = &pb.TaskOrderItem{
+			TaskId:       item.TaskID,
+			DisplayOrder: int32(item.DisplayOrder),
+		}
+	}
+
+	resp, err := h.BackendRequestsClient.UpdateTaskOrder(ctx, &pb.UpdateTaskOrderRequest{
+		UserId: request.UserID,
+		Tasks:  taskOrderItems,
+	})
+
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(dto.TaskOrderUpdateResponse{
+			Success: false,
+			Message: "Failed to update task order: " + err.Error(),
+		})
+	}
+
+	if !resp.Success {
+		return c.Status(fiber.StatusInternalServerError).JSON(dto.TaskOrderUpdateResponse{
+			Success: false,
+			Message: resp.Error,
+		})
+	}
+
+	return c.Status(fiber.StatusOK).JSON(dto.TaskOrderUpdateResponse{
+		Success: true,
+		Message: "Task order updated successfully",
+	})
+}
 
 func (h *Handler) UpdateTask(c *fiber.Ctx) error {
 	println("got update task request")
@@ -187,21 +235,16 @@ func (h *Handler) UpdateTask(c *fiber.Ctx) error {
 	})
 	ctx = metadata.NewOutgoingContext(ctx, md)
 
-	var customHours int32
-	if request.CustomHours != nil {
-		customHours = int32(*request.CustomHours)
-	}
-
-	var deadlineProto *timestamppb.Timestamp
+	var deadline *timestamppb.Timestamp
 	if request.Deadline != nil && *request.Deadline != "" {
-		deadline, err := time.Parse(time.RFC3339, *request.Deadline)
+		parsedDeadline, err := time.Parse(time.RFC3339, *request.Deadline)
 		if err != nil {
 			return c.Status(fiber.StatusBadRequest).JSON(dto.TaskUpdateResponse{
 				Success: false,
 				Message: "Invalid deadline format: " + err.Error(),
 			})
 		}
-		deadlineProto = timestamppb.New(deadline)
+		deadline = timestamppb.New(parsedDeadline)
 	}
 
 	var assignedTo []string
@@ -218,12 +261,28 @@ func (h *Handler) UpdateTask(c *fiber.Ctx) error {
 		privacyExceptIds = request.PrivacyExceptIDs
 	}
 
+	var customHours int32
+	if request.CustomHours != nil {
+		customHours = int32(*request.CustomHours)
+	}
+
+	var flagColor string
+	if request.FlagColor != nil {
+		flagColor = *request.FlagColor
+	}
+
+	var flagName string
+	if request.FlagName != nil {
+		flagName = *request.FlagName
+	}
+
+	// Create Task object for the gRPC request
 	task := &pb.Task{
 		Id:             request.ID,
 		UserId:         request.UserID,
 		Name:           request.Name,
 		Description:    request.Description,
-		Deadline:       deadlineProto,
+		Deadline:       deadline,
 		AssignedTo:     assignedTo,
 		TaskDifficulty: request.Difficulty,
 		CustomHours:    customHours,
@@ -235,6 +294,10 @@ func (h *Handler) UpdateTask(c *fiber.Ctx) error {
 			Level:     request.PrivacyLevel,
 			ExceptIds: privacyExceptIds,
 		},
+		FlagStatus:   request.FlagStatus,
+		FlagColor:    flagColor,
+		FlagName:     flagName,
+		DisplayOrder: int32(request.DisplayOrder),
 	}
 
 	resp, err := h.BackendRequestsClient.UpdateTask(ctx, &pb.UpdateTaskRequest{
@@ -409,73 +472,99 @@ func (h *Handler) RegisterNewProfile(c *fiber.Ctx) error {
 }
 
 func (h *Handler) SubmitTask(c *fiber.Ctx) error {
-	var request dto.TaskSubmissionRequest
-	if err := c.BodyParser(&request); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(dto.TaskSubmissionResponse{
-			Success: false,
-			TaskID:  "",
-			Message: "Invalid request format: " + err.Error(),
-		})
-	}
+    var request dto.TaskSubmissionRequest
+    if err := c.BodyParser(&request); err != nil {
+        return c.Status(fiber.StatusBadRequest).JSON(dto.TaskSubmissionResponse{
+            Success: false,
+            TaskID:  "",
+            Message: "Invalid request format: " + err.Error(),
+        })
+    }
 
-	ctx := context.Background()
-	md := metadata.New(map[string]string{
-		"authorization": request.Token,
-	})
-	ctx = metadata.NewOutgoingContext(ctx, md)
+    ctx := context.Background()
+    md := metadata.New(map[string]string{
+        "authorization": request.Token,
+    })
+    ctx = metadata.NewOutgoingContext(ctx, md)
 
-	var deadlineProto *timestamppb.Timestamp
-	if request.Deadline != nil && *request.Deadline != "" {
-		deadline, err := time.Parse(time.RFC3339, *request.Deadline)
-		if err != nil {
-			return c.Status(fiber.StatusBadRequest).JSON(dto.TaskSubmissionResponse{
-				Success: false,
-				TaskID:  "",
-				Message: "Invalid deadline format: " + err.Error(),
-			})
-		}
-		deadlineProto = timestamppb.New(deadline)
-	}
+    var deadlineProto *timestamppb.Timestamp
+    if request.Deadline != nil && *request.Deadline != "" {
+        deadline, err := time.Parse(time.RFC3339, *request.Deadline)
+        if err != nil {
+            return c.Status(fiber.StatusBadRequest).JSON(dto.TaskSubmissionResponse{
+                Success: false,
+                TaskID:  "",
+                Message: "Invalid deadline format: " + err.Error(),
+            })
+        }
+        deadlineProto = timestamppb.New(deadline)
+    }
 
-	task := &pb.Task{
-		Id:             uuid.New().String(),
-		UserId:         request.UserID,
-		Name:           request.Name,
-		Description:    request.Description,
-		Deadline:       deadlineProto,
-		Author:         request.Author,
-		Group:          *request.Group,
-		GroupId:        *request.GroupID,
-		AssignedTo:     request.AssignedTo,
-		TaskDifficulty: request.Difficulty,
-		CustomHours:    int32(*request.CustomHours),
-		Completion: &pb.CompletionStatus{
-			IsCompleted: false,
-			ProofUrl:    "",
-		},
-		Privacy: &pb.PrivacySettings{
-			Level:     request.PrivacyLevel,
-			ExceptIds: request.PrivacyExceptIDs,
-		},
-	}
+    var customHours int32
+    if request.CustomHours != nil {
+        customHours = int32(*request.CustomHours)
+    }
 
-	resp, err := h.BackendRequestsClient.CreateTask(ctx, &pb.CreateTaskRequest{
-		Task: task,
-	})
+    var group, groupId string
+    if request.Group != nil {
+        group = *request.Group
+    }
+    if request.GroupID != nil {
+        groupId = *request.GroupID
+    }
 
-	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(dto.TaskSubmissionResponse{
-			Success: false,
-			TaskID:  "",
-			Message: "Failed to create task: " + err.Error(),
-		})
-	}
+    var flagColor, flagName string
+    if request.FlagColor != nil {
+        flagColor = *request.FlagColor
+    }
+    if request.FlagName != nil {
+        flagName = *request.FlagName
+    }
 
-	return c.Status(fiber.StatusOK).JSON(dto.TaskSubmissionResponse{
-		Success: true,
-		TaskID:  resp.TaskId,
-		Message: "Task created successfully",
-	})
+    // Create Task object for the gRPC request
+    task := &pb.Task{
+        Id:             uuid.New().String(),
+        UserId:         request.UserID,
+        Name:           request.Name,
+        Description:    request.Description,
+        Deadline:       deadlineProto,
+        Author:         request.Author,
+        Group:          group,
+        GroupId:        groupId,
+        AssignedTo:     request.AssignedTo,
+        TaskDifficulty: request.Difficulty,
+        CustomHours:    customHours,
+        Completion: &pb.CompletionStatus{
+            IsCompleted: false,
+            ProofUrl:    "",
+        },
+        Privacy: &pb.PrivacySettings{
+            Level:     request.PrivacyLevel,
+            ExceptIds: request.PrivacyExceptIDs,
+        },
+        FlagStatus:    request.FlagStatus,
+        FlagColor:     flagColor,
+        FlagName:      flagName,
+        DisplayOrder:  int32(request.DisplayOrder),
+    }
+
+    resp, err := h.BackendRequestsClient.CreateTask(ctx, &pb.CreateTaskRequest{
+        Task: task,
+    })
+
+    if err != nil {
+        return c.Status(fiber.StatusInternalServerError).JSON(dto.TaskSubmissionResponse{
+            Success: false,
+            TaskID:  "",
+            Message: "Failed to create task: " + err.Error(),
+        })
+    }
+
+    return c.Status(fiber.StatusOK).JSON(dto.TaskSubmissionResponse{
+        Success: true,
+        TaskID:  resp.TaskId,
+        Message: "Task created successfully",
+    })
 }
 
 func getStringValue(ptr *string) string {
@@ -486,82 +575,94 @@ func getStringValue(ptr *string) string {
 }
 
 func (h *Handler) SubmitTasksBatch(c *fiber.Ctx) error {
-	var request dto.BatchTaskSubmissionRequest
-	println("receiving tasks from client")
-	if err := c.BodyParser(&request); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(dto.BatchTaskSubmissionResponse{
-			Success: false,
-			TaskIDs: []string{},
-			Message: "Invalid request format: " + err.Error(),
-		})
-	}
+    var request dto.BatchTaskSubmissionRequest
+    println("receiving tasks from client")
+    if err := c.BodyParser(&request); err != nil {
+        return c.Status(fiber.StatusBadRequest).JSON(dto.BatchTaskSubmissionResponse{
+            Success: false,
+            TaskIDs: []string{},
+            Message: "Invalid request format: " + err.Error(),
+        })
+    }
 
-	ctx := context.Background()
-	md := metadata.New(map[string]string{
-		"authorization": request.Token,
-	})
-	ctx = metadata.NewOutgoingContext(ctx, md)
+    ctx := context.Background()
+    md := metadata.New(map[string]string{
+        "authorization": request.Token,
+    })
+    ctx = metadata.NewOutgoingContext(ctx, md)
 
-	tasks := make([]*pb.Task, len(request.Tasks))
-	for i, taskSubmission := range request.Tasks {
-		var deadlineProto *timestamppb.Timestamp
-		if taskSubmission.Deadline != nil && *taskSubmission.Deadline != "" {
-			deadline, err := time.Parse(time.RFC3339, *taskSubmission.Deadline)
-			if err != nil {
-				return c.Status(fiber.StatusBadRequest).JSON(dto.BatchTaskSubmissionResponse{
-					Success: false,
-					TaskIDs: []string{},
-					Message: fmt.Sprintf("Invalid deadline format for task %d: %v", i, err),
-				})
-			}
-			deadlineProto = timestamppb.New(deadline)
-		}
+    tasks := make([]*pb.Task, len(request.Tasks))
+    for i, taskSubmission := range request.Tasks {
+        var deadlineProto *timestamppb.Timestamp
+        if taskSubmission.Deadline != nil && *taskSubmission.Deadline != "" {
+            deadline, err := time.Parse(time.RFC3339, *taskSubmission.Deadline)
+            if err != nil {
+                return c.Status(fiber.StatusBadRequest).JSON(dto.BatchTaskSubmissionResponse{
+                    Success: false,
+                    TaskIDs: []string{},
+                    Message: fmt.Sprintf("Invalid deadline format for task %d: %v", i, err),
+                })
+            }
+            deadlineProto = timestamppb.New(deadline)
+        }
 
-		var customHours int32
-		if taskSubmission.CustomHours != nil {
-			customHours = int32(*taskSubmission.CustomHours)
-		}
+        var customHours int32
+        if taskSubmission.CustomHours != nil {
+            customHours = int32(*taskSubmission.CustomHours)
+        }
 
-		tasks[i] = &pb.Task{
-			Id:             taskSubmission.Id,
-			UserId:         taskSubmission.UserID,
-			Name:           taskSubmission.Name,
-			Description:    taskSubmission.Description,
-			Deadline:       deadlineProto,
-			Author:         taskSubmission.Author,
-			Group:          getStringValue(taskSubmission.Group),
-			GroupId:        getStringValue(taskSubmission.GroupID),
-			AssignedTo:     taskSubmission.AssignedTo,
-			TaskDifficulty: taskSubmission.Difficulty,
-			CustomHours:    customHours,
-			Completion: &pb.CompletionStatus{
-				IsCompleted: false,
-				ProofUrl:    "",
-			},
-			Privacy: &pb.PrivacySettings{
-				Level:     taskSubmission.PrivacyLevel,
-				ExceptIds: taskSubmission.PrivacyExceptIDs,
-			},
-		}
-	}
+        var flagColor, flagName string
+        if taskSubmission.FlagColor != nil {
+            flagColor = *taskSubmission.FlagColor
+        }
+        if taskSubmission.FlagName != nil {
+            flagName = *taskSubmission.FlagName
+        }
 
-	resp, err := h.BackendRequestsClient.CreateTasksBatch(ctx, &pb.CreateTasksBatchRequest{
-		Tasks: tasks,
-	})
+        tasks[i] = &pb.Task{
+            Id:             taskSubmission.Id,
+            UserId:         taskSubmission.UserID,
+            Name:           taskSubmission.Name,
+            Description:    taskSubmission.Description,
+            Deadline:       deadlineProto,
+            Author:         taskSubmission.Author,
+            Group:          getStringValue(taskSubmission.Group),
+            GroupId:        getStringValue(taskSubmission.GroupID),
+            AssignedTo:     taskSubmission.AssignedTo,
+            TaskDifficulty: taskSubmission.Difficulty,
+            CustomHours:    customHours,
+            Completion: &pb.CompletionStatus{
+                IsCompleted: false,
+                ProofUrl:    "",
+            },
+            Privacy: &pb.PrivacySettings{
+                Level:     taskSubmission.PrivacyLevel,
+                ExceptIds: taskSubmission.PrivacyExceptIDs,
+            },
+            FlagStatus:    taskSubmission.FlagStatus,
+            FlagColor:     flagColor,
+            FlagName:      flagName,
+            DisplayOrder:  int32(taskSubmission.DisplayOrder),
+        }
+    }
 
-	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(dto.BatchTaskSubmissionResponse{
-			Success: false,
-			TaskIDs: []string{},
-			Message: "Failed to create tasks: " + err.Error(),
-		})
-	}
+    resp, err := h.BackendRequestsClient.CreateTasksBatch(ctx, &pb.CreateTasksBatchRequest{
+        Tasks: tasks,
+    })
 
-	return c.Status(fiber.StatusOK).JSON(dto.BatchTaskSubmissionResponse{
-		Success: true,
-		TaskIDs: resp.TaskIds,
-		Message: fmt.Sprintf("Successfully created %d tasks", len(resp.TaskIds)),
-	})
+    if err != nil {
+        return c.Status(fiber.StatusInternalServerError).JSON(dto.BatchTaskSubmissionResponse{
+            Success: false,
+            TaskIDs: []string{},
+            Message: "Failed to create tasks: " + err.Error(),
+        })
+    }
+
+    return c.Status(fiber.StatusOK).JSON(dto.BatchTaskSubmissionResponse{
+        Success: true,
+        TaskIDs: resp.TaskIds,
+        Message: fmt.Sprintf("Successfully created %d tasks", len(resp.TaskIds)),
+    })
 }
 
 func (h *Handler) GetUserTasks(c *fiber.Ctx) error {
@@ -637,6 +738,10 @@ func (h *Handler) GetUserTasks(c *fiber.Ctx) error {
 			"proof_url":          task.Completion.ProofUrl,
 			"privacy_level":      task.Privacy.Level,
 			"privacy_except_ids": task.Privacy.ExceptIds,
+			"flag_status":        task.FlagStatus,
+			"flag_color":         task.FlagColor,
+			"flag_name":          task.FlagName,
+			"display_order":      task.DisplayOrder,
 		}
 	}
 
