@@ -185,7 +185,6 @@ func (h *Handler) UpdateTaskOrder(c *fiber.Ctx) error {
 	})
 	ctx = metadata.NewOutgoingContext(ctx, md)
 
-	// Convert to gRPC request
 	taskOrderItems := make([]*pb.TaskOrderItem, len(request.Tasks))
 	for i, item := range request.Tasks {
 		taskOrderItems[i] = &pb.TaskOrderItem{
@@ -249,14 +248,14 @@ func (h *Handler) UpdateTask(c *fiber.Ctx) error {
 
 	var assignedTo []string
 	if request.AssignedTo == nil {
-		assignedTo = []string{} // Empty array instead of nil
+		assignedTo = []string{}
 	} else {
 		assignedTo = request.AssignedTo
 	}
 
 	var privacyExceptIds []string
 	if request.PrivacyExceptIDs == nil {
-		privacyExceptIds = []string{} // Empty array instead of nil
+		privacyExceptIds = []string{}
 	} else {
 		privacyExceptIds = request.PrivacyExceptIDs
 	}
@@ -276,7 +275,6 @@ func (h *Handler) UpdateTask(c *fiber.Ctx) error {
 		flagName = *request.FlagName
 	}
 
-	// Create Task object for the gRPC request
 	task := &pb.Task{
 		Id:             request.ID,
 		UserId:         request.UserID,
@@ -521,7 +519,6 @@ func (h *Handler) SubmitTask(c *fiber.Ctx) error {
         flagName = *request.FlagName
     }
 
-    // Create Task object for the gRPC request
     task := &pb.Task{
         Id:             uuid.New().String(),
         UserId:         request.UserID,
@@ -720,7 +717,6 @@ func (h *Handler) GetUserTasks(c *fiber.Ctx) error {
 			deadline = &deadlineStr
 		}
 
-		// Use a map to ensure all expected fields are present
 		tasks[i] = map[string]interface{}{
 			"id":                 task.Id,
 			"user_id":            task.UserId,
