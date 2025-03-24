@@ -32,5 +32,11 @@ func main() {
 
 	app.Post("/updateTaskOrder", handler.UpdateTaskOrder)
 
+	app.Post("/searchUsers", handler.SearchUsers)
+	app.Post("/sendFriendRequest", handler.SendFriendRequest)
+	app.Post("/respondToFriendRequest", handler.RespondToFriendRequest)
+	app.Get("/users/:userID/friends", handler.GetUserFriends)
+	app.Get("/users/:userID/friendRequests", handler.GetFriendRequests)
+
 	log.Fatal(app.Listen(":8080"))
 }

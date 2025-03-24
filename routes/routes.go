@@ -159,17 +159,54 @@ func (h *Handler) GetUser(c *fiber.Ctx) error {
 			"error":   resp.Error,
 		})
 	}
-	println("giving out user ", resp.Handle, resp.Color)
+
+	var friends []dto.Friend
+	for _, friend := range resp.Friends {
+		friends = append(friends, dto.Friend{
+			Id:             friend.Id,
+			Handle:         friend.Handle,
+			ProfilePicture: friend.ProfilePicture,
+			Color:          friend.Color,
+		})
+	}
+
+	var incomingRequests []dto.FriendRequest
+	for _, req := range resp.IncomingRequests {
+		incomingRequests = append(incomingRequests, dto.FriendRequest{
+			Id:           req.Id,
+			SenderId:     req.SenderId,
+			SenderHandle: req.SenderHandle,
+			ReceiverId:   req.ReceiverId,
+			Status:       req.Status,
+			CreatedAt:    req.CreatedAt.AsTime(),
+		})
+	}
+
+	var outgoingRequests []dto.FriendRequest
+	for _, req := range resp.OutgoingRequests {
+		outgoingRequests = append(outgoingRequests, dto.FriendRequest{
+			Id:           req.Id,
+			SenderId:     req.SenderId,
+			SenderHandle: req.SenderHandle,
+			ReceiverId:   req.ReceiverId,
+			Status:       req.Status,
+			CreatedAt:    req.CreatedAt.AsTime(),
+		})
+	}
 
 	return c.Status(fiber.StatusOK).JSON(dto.GetUserResponse{
-		Success:        true,
-		Id:             resp.Id,
-		Handle:         resp.Handle,
-		Bio:            resp.Bio,
-		ProfilePicture: resp.ProfilePicture,
-		Color:          resp.Color,
+		Success:          true,
+		Id:               resp.Id,
+		Handle:           resp.Handle,
+		Bio:              resp.Bio,
+		ProfilePicture:   resp.ProfilePicture,
+		Color:            resp.Color,
+		Friends:          friends,
+		IncomingRequests: incomingRequests,
+		OutgoingRequests: outgoingRequests,
 	})
 }
+
 func (h *Handler) UpdateTaskOrder(c *fiber.Ctx) error {
 	var request dto.TaskOrderUpdateRequest
 	if err := c.BodyParser(&request); err != nil {
@@ -470,98 +507,98 @@ func (h *Handler) RegisterNewProfile(c *fiber.Ctx) error {
 }
 
 func (h *Handler) SubmitTask(c *fiber.Ctx) error {
-    var request dto.TaskSubmissionRequest
-    if err := c.BodyParser(&request); err != nil {
-        return c.Status(fiber.StatusBadRequest).JSON(dto.TaskSubmissionResponse{
-            Success: false,
-            TaskID:  "",
-            Message: "Invalid request format: " + err.Error(),
-        })
-    }
+	var request dto.TaskSubmissionRequest
+	if err := c.BodyParser(&request); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(dto.TaskSubmissionResponse{
+			Success: false,
+			TaskID:  "",
+			Message: "Invalid request format: " + err.Error(),
+		})
+	}
 
-    ctx := context.Background()
-    md := metadata.New(map[string]string{
-        "authorization": request.Token,
-    })
-    ctx = metadata.NewOutgoingContext(ctx, md)
+	ctx := context.Background()
+	md := metadata.New(map[string]string{
+		"authorization": request.Token,
+	})
+	ctx = metadata.NewOutgoingContext(ctx, md)
 
-    var deadlineProto *timestamppb.Timestamp
-    if request.Deadline != nil && *request.Deadline != "" {
-        deadline, err := time.Parse(time.RFC3339, *request.Deadline)
-        if err != nil {
-            return c.Status(fiber.StatusBadRequest).JSON(dto.TaskSubmissionResponse{
-                Success: false,
-                TaskID:  "",
-                Message: "Invalid deadline format: " + err.Error(),
-            })
-        }
-        deadlineProto = timestamppb.New(deadline)
-    }
+	var deadlineProto *timestamppb.Timestamp
+	if request.Deadline != nil && *request.Deadline != "" {
+		deadline, err := time.Parse(time.RFC3339, *request.Deadline)
+		if err != nil {
+			return c.Status(fiber.StatusBadRequest).JSON(dto.TaskSubmissionResponse{
+				Success: false,
+				TaskID:  "",
+				Message: "Invalid deadline format: " + err.Error(),
+			})
+		}
+		deadlineProto = timestamppb.New(deadline)
+	}
 
-    var customHours int32
-    if request.CustomHours != nil {
-        customHours = int32(*request.CustomHours)
-    }
+	var customHours int32
+	if request.CustomHours != nil {
+		customHours = int32(*request.CustomHours)
+	}
 
-    var group, groupId string
-    if request.Group != nil {
-        group = *request.Group
-    }
-    if request.GroupID != nil {
-        groupId = *request.GroupID
-    }
+	var group, groupId string
+	if request.Group != nil {
+		group = *request.Group
+	}
+	if request.GroupID != nil {
+		groupId = *request.GroupID
+	}
 
-    var flagColor, flagName string
-    if request.FlagColor != nil {
-        flagColor = *request.FlagColor
-    }
-    if request.FlagName != nil {
-        flagName = *request.FlagName
-    }
+	var flagColor, flagName string
+	if request.FlagColor != nil {
+		flagColor = *request.FlagColor
+	}
+	if request.FlagName != nil {
+		flagName = *request.FlagName
+	}
 
-    task := &pb.Task{
-        Id:             uuid.New().String(),
-        UserId:         request.UserID,
-        Name:           request.Name,
-        Description:    request.Description,
-        Deadline:       deadlineProto,
-        Author:         request.Author,
-        Group:          group,
-        GroupId:        groupId,
-        AssignedTo:     request.AssignedTo,
-        TaskDifficulty: request.Difficulty,
-        CustomHours:    customHours,
-        Completion: &pb.CompletionStatus{
-            IsCompleted: false,
-            ProofUrl:    "",
-        },
-        Privacy: &pb.PrivacySettings{
-            Level:     request.PrivacyLevel,
-            ExceptIds: request.PrivacyExceptIDs,
-        },
-        FlagStatus:    request.FlagStatus,
-        FlagColor:     flagColor,
-        FlagName:      flagName,
-        DisplayOrder:  int32(request.DisplayOrder),
-    }
+	task := &pb.Task{
+		Id:             uuid.New().String(),
+		UserId:         request.UserID,
+		Name:           request.Name,
+		Description:    request.Description,
+		Deadline:       deadlineProto,
+		Author:         request.Author,
+		Group:          group,
+		GroupId:        groupId,
+		AssignedTo:     request.AssignedTo,
+		TaskDifficulty: request.Difficulty,
+		CustomHours:    customHours,
+		Completion: &pb.CompletionStatus{
+			IsCompleted: false,
+			ProofUrl:    "",
+		},
+		Privacy: &pb.PrivacySettings{
+			Level:     request.PrivacyLevel,
+			ExceptIds: request.PrivacyExceptIDs,
+		},
+		FlagStatus:   request.FlagStatus,
+		FlagColor:    flagColor,
+		FlagName:     flagName,
+		DisplayOrder: int32(request.DisplayOrder),
+	}
 
-    resp, err := h.BackendRequestsClient.CreateTask(ctx, &pb.CreateTaskRequest{
-        Task: task,
-    })
+	resp, err := h.BackendRequestsClient.CreateTask(ctx, &pb.CreateTaskRequest{
+		Task: task,
+	})
 
-    if err != nil {
-        return c.Status(fiber.StatusInternalServerError).JSON(dto.TaskSubmissionResponse{
-            Success: false,
-            TaskID:  "",
-            Message: "Failed to create task: " + err.Error(),
-        })
-    }
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(dto.TaskSubmissionResponse{
+			Success: false,
+			TaskID:  "",
+			Message: "Failed to create task: " + err.Error(),
+		})
+	}
 
-    return c.Status(fiber.StatusOK).JSON(dto.TaskSubmissionResponse{
-        Success: true,
-        TaskID:  resp.TaskId,
-        Message: "Task created successfully",
-    })
+	return c.Status(fiber.StatusOK).JSON(dto.TaskSubmissionResponse{
+		Success: true,
+		TaskID:  resp.TaskId,
+		Message: "Task created successfully",
+	})
 }
 
 func getStringValue(ptr *string) string {
@@ -572,94 +609,94 @@ func getStringValue(ptr *string) string {
 }
 
 func (h *Handler) SubmitTasksBatch(c *fiber.Ctx) error {
-    var request dto.BatchTaskSubmissionRequest
-    println("receiving tasks from client")
-    if err := c.BodyParser(&request); err != nil {
-        return c.Status(fiber.StatusBadRequest).JSON(dto.BatchTaskSubmissionResponse{
-            Success: false,
-            TaskIDs: []string{},
-            Message: "Invalid request format: " + err.Error(),
-        })
-    }
+	var request dto.BatchTaskSubmissionRequest
+	println("receiving tasks from client")
+	if err := c.BodyParser(&request); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(dto.BatchTaskSubmissionResponse{
+			Success: false,
+			TaskIDs: []string{},
+			Message: "Invalid request format: " + err.Error(),
+		})
+	}
 
-    ctx := context.Background()
-    md := metadata.New(map[string]string{
-        "authorization": request.Token,
-    })
-    ctx = metadata.NewOutgoingContext(ctx, md)
+	ctx := context.Background()
+	md := metadata.New(map[string]string{
+		"authorization": request.Token,
+	})
+	ctx = metadata.NewOutgoingContext(ctx, md)
 
-    tasks := make([]*pb.Task, len(request.Tasks))
-    for i, taskSubmission := range request.Tasks {
-        var deadlineProto *timestamppb.Timestamp
-        if taskSubmission.Deadline != nil && *taskSubmission.Deadline != "" {
-            deadline, err := time.Parse(time.RFC3339, *taskSubmission.Deadline)
-            if err != nil {
-                return c.Status(fiber.StatusBadRequest).JSON(dto.BatchTaskSubmissionResponse{
-                    Success: false,
-                    TaskIDs: []string{},
-                    Message: fmt.Sprintf("Invalid deadline format for task %d: %v", i, err),
-                })
-            }
-            deadlineProto = timestamppb.New(deadline)
-        }
+	tasks := make([]*pb.Task, len(request.Tasks))
+	for i, taskSubmission := range request.Tasks {
+		var deadlineProto *timestamppb.Timestamp
+		if taskSubmission.Deadline != nil && *taskSubmission.Deadline != "" {
+			deadline, err := time.Parse(time.RFC3339, *taskSubmission.Deadline)
+			if err != nil {
+				return c.Status(fiber.StatusBadRequest).JSON(dto.BatchTaskSubmissionResponse{
+					Success: false,
+					TaskIDs: []string{},
+					Message: fmt.Sprintf("Invalid deadline format for task %d: %v", i, err),
+				})
+			}
+			deadlineProto = timestamppb.New(deadline)
+		}
 
-        var customHours int32
-        if taskSubmission.CustomHours != nil {
-            customHours = int32(*taskSubmission.CustomHours)
-        }
+		var customHours int32
+		if taskSubmission.CustomHours != nil {
+			customHours = int32(*taskSubmission.CustomHours)
+		}
 
-        var flagColor, flagName string
-        if taskSubmission.FlagColor != nil {
-            flagColor = *taskSubmission.FlagColor
-        }
-        if taskSubmission.FlagName != nil {
-            flagName = *taskSubmission.FlagName
-        }
+		var flagColor, flagName string
+		if taskSubmission.FlagColor != nil {
+			flagColor = *taskSubmission.FlagColor
+		}
+		if taskSubmission.FlagName != nil {
+			flagName = *taskSubmission.FlagName
+		}
 
-        tasks[i] = &pb.Task{
-            Id:             taskSubmission.Id,
-            UserId:         taskSubmission.UserID,
-            Name:           taskSubmission.Name,
-            Description:    taskSubmission.Description,
-            Deadline:       deadlineProto,
-            Author:         taskSubmission.Author,
-            Group:          getStringValue(taskSubmission.Group),
-            GroupId:        getStringValue(taskSubmission.GroupID),
-            AssignedTo:     taskSubmission.AssignedTo,
-            TaskDifficulty: taskSubmission.Difficulty,
-            CustomHours:    customHours,
-            Completion: &pb.CompletionStatus{
-                IsCompleted: false,
-                ProofUrl:    "",
-            },
-            Privacy: &pb.PrivacySettings{
-                Level:     taskSubmission.PrivacyLevel,
-                ExceptIds: taskSubmission.PrivacyExceptIDs,
-            },
-            FlagStatus:    taskSubmission.FlagStatus,
-            FlagColor:     flagColor,
-            FlagName:      flagName,
-            DisplayOrder:  int32(taskSubmission.DisplayOrder),
-        }
-    }
+		tasks[i] = &pb.Task{
+			Id:             taskSubmission.Id,
+			UserId:         taskSubmission.UserID,
+			Name:           taskSubmission.Name,
+			Description:    taskSubmission.Description,
+			Deadline:       deadlineProto,
+			Author:         taskSubmission.Author,
+			Group:          getStringValue(taskSubmission.Group),
+			GroupId:        getStringValue(taskSubmission.GroupID),
+			AssignedTo:     taskSubmission.AssignedTo,
+			TaskDifficulty: taskSubmission.Difficulty,
+			CustomHours:    customHours,
+			Completion: &pb.CompletionStatus{
+				IsCompleted: false,
+				ProofUrl:    "",
+			},
+			Privacy: &pb.PrivacySettings{
+				Level:     taskSubmission.PrivacyLevel,
+				ExceptIds: taskSubmission.PrivacyExceptIDs,
+			},
+			FlagStatus:   taskSubmission.FlagStatus,
+			FlagColor:    flagColor,
+			FlagName:     flagName,
+			DisplayOrder: int32(taskSubmission.DisplayOrder),
+		}
+	}
 
-    resp, err := h.BackendRequestsClient.CreateTasksBatch(ctx, &pb.CreateTasksBatchRequest{
-        Tasks: tasks,
-    })
+	resp, err := h.BackendRequestsClient.CreateTasksBatch(ctx, &pb.CreateTasksBatchRequest{
+		Tasks: tasks,
+	})
 
-    if err != nil {
-        return c.Status(fiber.StatusInternalServerError).JSON(dto.BatchTaskSubmissionResponse{
-            Success: false,
-            TaskIDs: []string{},
-            Message: "Failed to create tasks: " + err.Error(),
-        })
-    }
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(dto.BatchTaskSubmissionResponse{
+			Success: false,
+			TaskIDs: []string{},
+			Message: "Failed to create tasks: " + err.Error(),
+		})
+	}
 
-    return c.Status(fiber.StatusOK).JSON(dto.BatchTaskSubmissionResponse{
-        Success: true,
-        TaskIDs: resp.TaskIds,
-        Message: fmt.Sprintf("Successfully created %d tasks", len(resp.TaskIds)),
-    })
+	return c.Status(fiber.StatusOK).JSON(dto.BatchTaskSubmissionResponse{
+		Success: true,
+		TaskIDs: resp.TaskIds,
+		Message: fmt.Sprintf("Successfully created %d tasks", len(resp.TaskIds)),
+	})
 }
 
 func (h *Handler) GetUserTasks(c *fiber.Ctx) error {
@@ -745,5 +782,274 @@ func (h *Handler) GetUserTasks(c *fiber.Ctx) error {
 		"success": true,
 		"tasks":   tasks,
 		"message": nil,
+	})
+}
+
+func (h *Handler) SearchUsers(c *fiber.Ctx) error {
+	var request dto.SearchUsersRequest
+	if err := c.BodyParser(&request); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(dto.SearchUsersResponse{
+			Success: false,
+			Message: "Invalid request format: " + err.Error(),
+		})
+	}
+
+	if request.Query == "" {
+		return c.Status(fiber.StatusBadRequest).JSON(dto.SearchUsersResponse{
+			Success: false,
+			Message: "Search query is required",
+		})
+	}
+
+	ctx := context.Background()
+	md := metadata.New(map[string]string{
+		"authorization": request.Token,
+	})
+	ctx = metadata.NewOutgoingContext(ctx, md)
+
+	if request.Limit <= 0 {
+		request.Limit = 10
+	}
+
+	resp, err := h.BackendRequestsClient.SearchUsers(ctx, &pb.SearchUsersRequest{
+		Query: request.Query,
+		Limit: request.Limit,
+	})
+
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(dto.SearchUsersResponse{
+			Success: false,
+			Message: "Failed to search users: " + err.Error(),
+		})
+	}
+
+	var users []dto.UserSearchResult
+	for _, user := range resp.Users {
+		users = append(users, dto.UserSearchResult{
+			Id:             user.Id,
+			Handle:         user.Handle,
+			ProfilePicture: user.ProfilePicture,
+			Color:          user.Color,
+		})
+	}
+
+	return c.Status(fiber.StatusOK).JSON(dto.SearchUsersResponse{
+		Success: true,
+		Users:   users,
+	})
+}
+
+func (h *Handler) SendFriendRequest(c *fiber.Ctx) error {
+	var request dto.SendFriendRequestRequest
+	if err := c.BodyParser(&request); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(dto.SendFriendRequestResponse{
+			Success: false,
+			Message: "Invalid request format: " + err.Error(),
+		})
+	}
+
+	if request.SenderId == "" || request.ReceiverId == "" {
+		return c.Status(fiber.StatusBadRequest).JSON(dto.SendFriendRequestResponse{
+			Success: false,
+			Message: "Sender and receiver IDs are required",
+		})
+	}
+
+	ctx := context.Background()
+	md := metadata.New(map[string]string{
+		"authorization": request.Token,
+	})
+	ctx = metadata.NewOutgoingContext(ctx, md)
+
+	resp, err := h.BackendRequestsClient.SendFriendRequest(ctx, &pb.SendFriendRequestRequest{
+		SenderId:   request.SenderId,
+		ReceiverId: request.ReceiverId,
+	})
+
+	if err != nil {
+		println("error ", err.Error())
+		return c.Status(fiber.StatusInternalServerError).JSON(dto.SendFriendRequestResponse{
+			Success: false,
+			Message: "Failed to send friend request: " + err.Error(),
+		})
+	}
+
+	return c.Status(fiber.StatusOK).JSON(dto.SendFriendRequestResponse{
+		Success:   resp.Success,
+		RequestId: resp.RequestId,
+		Message:   resp.Error,
+	})
+}
+
+func (h *Handler) RespondToFriendRequest(c *fiber.Ctx) error {
+	var request dto.RespondToFriendRequestRequest
+	if err := c.BodyParser(&request); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(dto.RespondToFriendRequestResponse{
+			Success: false,
+			Message: "Invalid request format: " + err.Error(),
+		})
+	}
+
+	if request.RequestId == "" || request.UserId == "" || request.Response == "" {
+		return c.Status(fiber.StatusBadRequest).JSON(dto.RespondToFriendRequestResponse{
+			Success: false,
+			Message: "Request ID, user ID, and response are required",
+		})
+	}
+
+	if request.Response != "accept" && request.Response != "reject" {
+		return c.Status(fiber.StatusBadRequest).JSON(dto.RespondToFriendRequestResponse{
+			Success: false,
+			Message: "Response must be 'accept' or 'reject'",
+		})
+	}
+
+	ctx := context.Background()
+	md := metadata.New(map[string]string{
+		"authorization": request.Token,
+	})
+	ctx = metadata.NewOutgoingContext(ctx, md)
+
+	resp, err := h.BackendRequestsClient.RespondToFriendRequest(ctx, &pb.RespondToFriendRequestRequest{
+		RequestId: request.RequestId,
+		UserId:    request.UserId,
+		Response:  request.Response,
+	})
+
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(dto.RespondToFriendRequestResponse{
+			Success: false,
+			Message: "Failed to respond to friend request: " + err.Error(),
+		})
+	}
+
+	if !resp.Success {
+		return c.Status(fiber.StatusBadRequest).JSON(dto.RespondToFriendRequestResponse{
+			Success: false,
+			Message: resp.Error,
+		})
+	}
+
+	return c.Status(fiber.StatusOK).JSON(dto.RespondToFriendRequestResponse{
+		Success: true,
+		Message: "Friend request " + request.Response + "ed successfully",
+	})
+}
+
+func (h *Handler) GetUserFriends(c *fiber.Ctx) error {
+	userID := c.Params("userID")
+	if userID == "" {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"success": false,
+			"message": "User ID is required",
+			"friends": []interface{}{},
+		})
+	}
+
+	token := c.Get("Authorization")
+	if token == "" {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+			"success": false,
+			"message": "Authorization token is required",
+			"friends": []interface{}{},
+		})
+	}
+
+	ctx := context.Background()
+	md := metadata.New(map[string]string{
+		"authorization": token,
+	})
+	ctx = metadata.NewOutgoingContext(ctx, md)
+
+	resp, err := h.BackendRequestsClient.GetUserFriends(ctx, &pb.GetUserFriendsRequest{
+		UserId: userID,
+	})
+
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"success": false,
+			"message": "Failed to fetch friends: " + err.Error(),
+			"friends": []interface{}{},
+		})
+	}
+
+	var friends []dto.Friend
+	for _, friend := range resp.Friends {
+		friends = append(friends, dto.Friend{
+			Id:             friend.Id,
+			Handle:         friend.Handle,
+			ProfilePicture: friend.ProfilePicture,
+			Color:          friend.Color,
+		})
+	}
+
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"success": true,
+		"friends": friends,
+	})
+}
+
+func (h *Handler) GetFriendRequests(c *fiber.Ctx) error {
+	userID := c.Params("userID")
+	if userID == "" {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"success":  false,
+			"message":  "User ID is required",
+			"requests": []interface{}{},
+		})
+	}
+
+	requestType := c.Query("type")
+	if requestType != "incoming" && requestType != "outgoing" {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"success":  false,
+			"message":  "Type must be 'incoming' or 'outgoing'",
+			"requests": []interface{}{},
+		})
+	}
+
+	token := c.Get("Authorization")
+	if token == "" {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+			"success":  false,
+			"message":  "Authorization token is required",
+			"requests": []interface{}{},
+		})
+	}
+
+	ctx := context.Background()
+	md := metadata.New(map[string]string{
+		"authorization": token,
+	})
+	ctx = metadata.NewOutgoingContext(ctx, md)
+
+	resp, err := h.BackendRequestsClient.GetFriendRequests(ctx, &pb.GetFriendRequestsRequest{
+		UserId: userID,
+		Type:   requestType,
+	})
+
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"success":  false,
+			"message":  "Failed to fetch friend requests: " + err.Error(),
+			"requests": []interface{}{},
+		})
+	}
+
+	var requests []dto.FriendRequest
+	for _, req := range resp.Requests {
+		requests = append(requests, dto.FriendRequest{
+			Id:           req.Id,
+			SenderId:     req.SenderId,
+			SenderHandle: req.SenderHandle,
+			ReceiverId:   req.ReceiverId,
+			Status:       req.Status,
+			CreatedAt:    req.CreatedAt.AsTime(),
+		})
+	}
+
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"success":  true,
+		"requests": requests,
 	})
 }

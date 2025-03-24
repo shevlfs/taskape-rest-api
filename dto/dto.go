@@ -1,5 +1,7 @@
 package dto
 
+import "time"
+
 type TaskSubmissionRequest struct {
 	UserID           string   `json:"user_id"`
 	Name             string   `json:"name"`
@@ -37,13 +39,16 @@ type CheckHandleResponse struct {
 }
 
 type GetUserResponse struct {
-	Success        bool   `json:"success"`
-	Id             string `json:"id"`
-	Handle         string `json:"handle"`
-	Bio            string `json:"bio"`
-	ProfilePicture string `json:"profile_picture"`
-	Color          string `json:"color"`
-	Error          string `json:"error,omitempty"`
+	Success          bool            `json:"success"`
+	Id               string          `json:"id"`
+	Handle           string          `json:"handle"`
+	Bio              string          `json:"bio"`
+	ProfilePicture   string          `json:"profile_picture"`
+	Color            string          `json:"color"`
+	Friends          []Friend        `json:"friends"`
+	IncomingRequests []FriendRequest `json:"incoming_requests"`
+	OutgoingRequests []FriendRequest `json:"outgoing_requests"`
+	Error            string          `json:"error,omitempty"`
 }
 
 type BatchTaskSubmissionRequest struct {
@@ -148,7 +153,6 @@ type TaskResponse struct {
 	DisplayOrder     int      `json:"display_order"`
 }
 
-// TaskUpdateResponse represents the response for a task update request
 type TaskUpdateResponse struct {
 	Success bool   `json:"success"`
 	Message string `json:"message,omitempty"`
@@ -166,6 +170,65 @@ type TaskOrderItem struct {
 }
 
 type TaskOrderUpdateResponse struct {
+	Success bool   `json:"success"`
+	Message string `json:"message,omitempty"`
+}
+
+type Friend struct {
+	Id             string `json:"id"`
+	Handle         string `json:"handle"`
+	ProfilePicture string `json:"profile_picture"`
+	Color          string `json:"color"`
+}
+
+type FriendRequest struct {
+	Id           string    `json:"id"`
+	SenderId     string    `json:"sender_id"`
+	SenderHandle string    `json:"sender_handle"`
+	ReceiverId   string    `json:"receiver_id"`
+	Status       string    `json:"status"`
+	CreatedAt    time.Time `json:"created_at"`
+}
+
+type SearchUsersRequest struct {
+	Query string `json:"query"`
+	Limit int32  `json:"limit"`
+	Token string `json:"token"`
+}
+
+type SearchUsersResponse struct {
+	Success bool               `json:"success"`
+	Users   []UserSearchResult `json:"users"`
+	Message string             `json:"message,omitempty"`
+}
+
+type UserSearchResult struct {
+	Id             string `json:"id"`
+	Handle         string `json:"handle"`
+	ProfilePicture string `json:"profile_picture"`
+	Color          string `json:"color"`
+}
+
+type SendFriendRequestRequest struct {
+	SenderId   string `json:"sender_id"`
+	ReceiverId string `json:"receiver_id"`
+	Token      string `json:"token"`
+}
+
+type SendFriendRequestResponse struct {
+	Success   bool   `json:"success"`
+	RequestId string `json:"request_id,omitempty"`
+	Message   string `json:"message,omitempty"`
+}
+
+type RespondToFriendRequestRequest struct {
+	RequestId string `json:"request_id"`
+	UserId    string `json:"user_id"`
+	Response  string `json:"response"`
+	Token     string `json:"token"`
+}
+
+type RespondToFriendRequestResponse struct {
 	Success bool   `json:"success"`
 	Message string `json:"message,omitempty"`
 }
