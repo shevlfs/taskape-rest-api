@@ -3,6 +3,7 @@ package handlers
 import (
 	"context"
 	"fmt"
+	"log"
 	"taskape-rest-api/internal/dto"
 	proto "taskape-rest-api/proto"
 	"time"
@@ -221,6 +222,10 @@ func (h *TaskHandler) GetUserTasks(c *fiber.Ctx) error {
 		})
 	}
 
+	requesterID := c.Query("requester_id", "")
+
+	log.Printf("REST API: GetUserTasks for userID=%s, requesterID=%s", userID, requesterID)
+
 	ctx := context.Background()
 	md := metadata.New(map[string]string{
 		"authorization": token,
@@ -228,7 +233,8 @@ func (h *TaskHandler) GetUserTasks(c *fiber.Ctx) error {
 	ctx = metadata.NewOutgoingContext(ctx, md)
 
 	resp, err := h.BackendClient.GetUserTasks(ctx, &proto.GetUserTasksRequest{
-		UserId: userID,
+		UserId:      userID,
+		RequesterId: requesterID,
 	})
 
 	if err != nil {
@@ -278,6 +284,8 @@ func (h *TaskHandler) GetUserTasks(c *fiber.Ctx) error {
 			"display_order":      task.DisplayOrder,
 		}
 	}
+
+	log.Printf("REST API: Returning %d tasks for userID=%s", len(tasks), userID)
 
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{
 		"success": true,
