@@ -451,3 +451,62 @@ func getStringValue(ptr *string) string {
 	}
 	return *ptr
 }
+
+func (h *TaskHandler) ConfirmTaskCompletion(c *fiber.Ctx) error {
+	var request dto.ConfirmTaskCompletionRequest
+	if err := c.BodyParser(&request); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"success": false,
+			"message": "Invalid request format: " + err.Error(),
+		})
+	}
+
+	if request.TaskID == "" || request.ConfirmerID == "" {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"success": false,
+			"message": "Task ID and confirmer ID are required",
+		})
+	}
+
+	token := c.Get("Authorization")
+	if token == "" && request.Token == "" {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+			"success": false,
+			"message": "Authorization token is required",
+		})
+	}
+
+	if token == "" {
+		token = request.Token
+	}
+
+	ctx := context.Background()
+	md := metadata.New(map[string]string{
+		"authorization": token,
+	})
+	ctx = metadata.NewOutgoingContext(ctx, md)
+
+	resp, err := h.BackendClient.ConfirmTaskCompletion(ctx, &proto.ConfirmTaskCompletionRequest{
+		TaskId:      request.TaskID,
+		ConfirmerId: request.ConfirmerID,
+		IsConfirmed: request.IsConfirmed,
+	})
+
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"success": false,
+			"message": "Failed to confirm task completion: " + err.Error(),
+		})
+	}
+
+	if !resp.Success {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"success": false,
+			"message": resp.Error,
+		})
+	}
+
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"success": true,
+	})
+}

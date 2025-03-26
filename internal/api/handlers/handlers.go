@@ -10,6 +10,7 @@ type Handlers struct {
 	Task   *TaskHandler
 	Auth   *AuthHandler
 	Friend *FriendHandler
+	Event *EventHandler
 }
 
 func NewHandlers(client proto.BackendRequestsClient, cfg *config.Config) *Handlers {

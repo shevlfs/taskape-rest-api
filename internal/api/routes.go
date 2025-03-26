@@ -28,4 +28,12 @@ func SetupRoutes(app *fiber.App, h *handlers.Handlers) {
 	app.Post("/respondToFriendRequest", h.Friend.RespondToFriendRequest)
 	app.Get("/users/:userID/friends", h.Friend.GetUserFriends)
 	app.Get("/users/:userID/friendRequests", h.Friend.GetFriendRequests)
+
+	app.Get("/users/:userID/events", h.Event.GetUserEvents)
+
+	app.Post("/events/:eventID/like", h.Event.LikeEvent)
+	app.Delete("/events/:eventID/like", h.Event.UnlikeEvent)
+	app.Get("/events/:eventID/comments", h.Event.GetEventComments)
+	app.Post("/events/:eventID/comments", h.Event.AddEventComment)
+	app.Delete("/events/:eventID/comments/:commentID", h.Event.DeleteEventComment)
 }
