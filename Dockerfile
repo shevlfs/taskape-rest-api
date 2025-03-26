@@ -10,7 +10,7 @@ COPY go.mod go.sum ./
 COPY . .
 
 # Build the REST API
-RUN go build -mod=vendor -o taskape-rest-api .
+RUN go build -mod=vendor -o taskape-rest-api ./cmd/api
 
 # --- Final stage ---
 FROM alpine:latest
