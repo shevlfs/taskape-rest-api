@@ -23,14 +23,6 @@ func (h *FriendHandler) SearchUsers(c *fiber.Ctx) error {
 		})
 	}
 
-	if request.Query == "" {
-		return c.Status(fiber.StatusBadRequest).JSON(dto.SearchUsersResponse{
-			Success: false,
-			Users:   nil,
-			Message: "Search query is required",
-		})
-	}
-
 	if request.Limit <= 0 {
 		request.Limit = 10
 	}
