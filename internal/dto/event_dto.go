@@ -7,7 +7,7 @@ type EventResponse struct {
 	Type           string   `json:"type"`
 	Size           string   `json:"size"`
 	CreatedAt      string   `json:"created_at"`
-	ExpiresAt      *string  `json:"expires_at,omitempty"`
+	ExpiresAt      *string  `json:"expires_at"`
 	TaskIDs        []string `json:"task_ids"`
 	StreakDays     int      `json:"streak_days"`
 	LikesCount     int      `json:"likes_count"`
@@ -24,7 +24,7 @@ type GetUserEventsRequest struct {
 type GetUserEventsResponse struct {
 	Success bool            `json:"success"`
 	Events  []EventResponse `json:"events"`
-	Message string          `json:"message,omitempty"`
+	Message string          `json:"message"`
 }
 
 type LikeEventRequest struct {
@@ -35,7 +35,7 @@ type LikeEventRequest struct {
 type LikeEventResponse struct {
 	Success    bool   `json:"success"`
 	LikesCount int    `json:"likes_count"`
-	Message    string `json:"message,omitempty"`
+	Message    string `json:"message"`
 }
 
 type EventCommentResponse struct {
@@ -45,7 +45,7 @@ type EventCommentResponse struct {
 	Content   string  `json:"content"`
 	CreatedAt string  `json:"created_at"`
 	IsEdited  bool    `json:"is_edited"`
-	EditedAt  *string `json:"edited_at,omitempty"`
+	EditedAt  *string `json:"edited_at"`
 }
 
 type AddEventCommentRequest struct {
@@ -57,7 +57,7 @@ type AddEventCommentRequest struct {
 type AddEventCommentResponse struct {
 	Success bool                 `json:"success"`
 	Comment EventCommentResponse `json:"comment"`
-	Message string               `json:"message,omitempty"`
+	Message string               `json:"message"`
 }
 
 type GetEventCommentsRequest struct {
@@ -70,7 +70,7 @@ type GetEventCommentsResponse struct {
 	Success    bool                   `json:"success"`
 	Comments   []EventCommentResponse `json:"comments"`
 	TotalCount int                    `json:"total_count"`
-	Message    string                 `json:"message,omitempty"`
+	Message    string                 `json:"message"`
 }
 
 type DeleteEventCommentRequest struct {
@@ -79,5 +79,5 @@ type DeleteEventCommentRequest struct {
 
 type DeleteEventCommentResponse struct {
 	Success bool   `json:"success"`
-	Message string `json:"message,omitempty"`
+	Message string `json:"message"`
 }

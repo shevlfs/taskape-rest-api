@@ -70,7 +70,7 @@ func (h *EventHandler) GetUserEvents(c *fiber.Ctx) error {
 	for i, event := range resp.Events {
 		events[i] = convertToEventResponse(event)
 	}
-
+    println("giving out events, count:", len(events))
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{
 		"success": true,
 		"events":  events,
