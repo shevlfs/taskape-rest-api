@@ -18,7 +18,6 @@ type Server struct {
 
 func NewServer(cfg *config.Config, client proto.BackendRequestsClient) *Server {
 	app := fiber.New(fiber.Config{
-		Prefork: true,
 		ErrorHandler: func(c *fiber.Ctx, err error) error {
 			code := fiber.StatusInternalServerError
 
