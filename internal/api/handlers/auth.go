@@ -40,23 +40,25 @@ func (h *AuthHandler) Ping(c *fiber.Ctx) error {
 }
 
 func (h *AuthHandler) SendVerificationCode(c *fiber.Ctx) error {
-	var request dto.PhoneVerificationRequest
-	if err := c.BodyParser(&request); err != nil {
-		return c.Status(fiber.StatusBadRequest).SendString(err.Error())
+	if h.Config.Environment != "development" {
+		var request dto.PhoneVerificationRequest
+		if err := c.BodyParser(&request); err != nil {
+			return c.Status(fiber.StatusBadRequest).SendString(err.Error())
+		}
+
+		phone := request.Phone
+
+		params := &verify.CreateVerificationParams{}
+		params.SetTo(phone)
+		params.SetChannel("sms")
+
+		_, err := h.TwilioClient.VerifyV2.CreateVerification("VA8cd7f3e1bad0573034eeb9585254d477", params)
+		if err != nil {
+			return err
+		}
 	}
 
-	phone := request.Phone
-
-	params := &verify.CreateVerificationParams{}
-	params.SetTo(phone)
-	params.SetChannel("sms")
-
-	_, err := h.TwilioClient.VerifyV2.CreateVerification("VA8cd7f3e1bad0573034eeb9585254d477", params)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return c.SendStatus(fiber.StatusOK)
 }
 
 func (h *AuthHandler) CheckVerificationCode(c *fiber.Ctx) error {
