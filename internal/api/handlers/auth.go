@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"context"
+	"fmt"
 	"taskape-rest-api/internal/config"
 	"taskape-rest-api/internal/dto"
 	proto "taskape-rest-api/proto"
@@ -9,6 +10,7 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/twilio/twilio-go"
+	verify "github.com/twilio/twilio-go/rest/verify/v2"
 )
 
 type AuthHandler struct {
@@ -38,7 +40,23 @@ func (h *AuthHandler) Ping(c *fiber.Ctx) error {
 }
 
 func (h *AuthHandler) SendVerificationCode(c *fiber.Ctx) error {
-	return c.SendStatus(fiber.StatusOK)
+	var request dto.PhoneVerificationRequest
+	if err := c.BodyParser(&request); err != nil {
+		return c.Status(fiber.StatusBadRequest).SendString(err.Error())
+	}
+
+	phone := request.Phone
+
+	params := &verify.CreateVerificationParams{}
+	params.SetTo(phone)
+	params.SetChannel("sms")
+
+	_, err := h.TwilioClient.VerifyV2.CreateVerification("VA8cd7f3e1bad0573034eeb9585254d477", params)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (h *AuthHandler) CheckVerificationCode(c *fiber.Ctx) error {
@@ -53,7 +71,7 @@ func (h *AuthHandler) CheckVerificationCode(c *fiber.Ctx) error {
 	if phone == "" || code == "" {
 		return c.Status(fiber.StatusBadRequest).SendString("Phone number and code are required")
 	}
-	if h.Config.Environment == "development" || code == "111111" {
+	if h.Config.Environment == "development" || h.checkCode(phone, code) {
 
 		response, err := h.BackendClient.LoginNewUser(context.Background(), &proto.NewUserLoginRequest{
 			Phone: phone,
@@ -71,8 +89,25 @@ func (h *AuthHandler) CheckVerificationCode(c *fiber.Ctx) error {
 		})
 	}
 
-
 	return c.Status(fiber.StatusBadRequest).SendString("Invalid verification code")
+}
+
+func (h *AuthHandler) checkCode(phone string, code string) bool {
+	params := &verify.CreateVerificationCheckParams{}
+	params.SetTo(phone)
+	params.SetCode(code)
+
+	resp, err := h.TwilioClient.VerifyV2.CreateVerificationCheck("VA8cd7f3e1bad0573034eeb9585254d477", params)
+	if err != nil {
+		fmt.Println(err.Error())
+	} else {
+		if resp.Status != nil {
+			if *resp.Status == "approved" {
+				return true
+			}
+		}
+	}
+	return false
 }
 
 func (h *AuthHandler) ValidateToken(c *fiber.Ctx) error {
