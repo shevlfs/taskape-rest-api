@@ -80,7 +80,7 @@ func (h *AuthHandler) CheckVerificationCode(c *fiber.Ctx) error {
 		})
 
 		if err != nil {
-			return c.Status(fiber.StatusInternalServerError).SendString(err.Error())
+			return c.Status(fiber.StatusInternalServerError).SendString("BACKEND IS DEAD")
 		}
 
 		return c.JSON(dto.VerificationResponse{
