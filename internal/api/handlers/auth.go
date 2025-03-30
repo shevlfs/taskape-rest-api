@@ -80,7 +80,7 @@ func (h *AuthHandler) CheckVerificationCode(c *fiber.Ctx) error {
 		})
 
 		if err != nil {
-			return c.Status(fiber.StatusInternalServerError).SendString(response.String())
+			return c.Status(fiber.StatusInternalServerError).SendString(fmt.Sprintf(response.String(), err.Error()))
 		}
 
 		return c.JSON(dto.VerificationResponse{
