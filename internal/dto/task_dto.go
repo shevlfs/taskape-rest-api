@@ -1,25 +1,5 @@
 package dto
 
-type TaskSubmissionRequest struct {
-	UserID           string   `json:"user_id"`
-	Name             string   `json:"name"`
-	Description      string   `json:"description"`
-	Deadline         *string  `json:"deadline"`
-	Author           string   `json:"author"`
-	Group            *string  `json:"group"`
-	GroupID          *string  `json:"group_id"`
-	AssignedTo       []string `json:"assigned_to"`
-	Difficulty       string   `json:"difficulty"`
-	CustomHours      *int     `json:"custom_hours"`
-	PrivacyLevel     string   `json:"privacy_level"`
-	PrivacyExceptIDs []string `json:"privacy_except_ids"`
-	FlagStatus       bool     `json:"flag_status"`
-	FlagColor        *string  `json:"flag_color"`
-	FlagName         *string  `json:"flag_name"`
-	DisplayOrder     int      `json:"display_order"`
-	Token            string   `json:"token"`
-}
-
 type TaskSubmissionResponse struct {
 	Success bool   `json:"success"`
 	TaskID  string `json:"task_id"`
@@ -29,26 +9,6 @@ type TaskSubmissionResponse struct {
 type BatchTaskSubmissionRequest struct {
 	Tasks []TaskSubmission `json:"tasks"`
 	Token string           `json:"token"`
-}
-
-type TaskSubmission struct {
-	Id               string   `json:"id"`
-	UserID           string   `json:"user_id"`
-	Name             string   `json:"name"`
-	Description      string   `json:"description"`
-	Deadline         *string  `json:"deadline"`
-	Author           string   `json:"author"`
-	Group            *string  `json:"group"`
-	GroupID          *string  `json:"group_id"`
-	AssignedTo       []string `json:"assigned_to"`
-	Difficulty       string   `json:"difficulty"`
-	CustomHours      *int     `json:"custom_hours"`
-	PrivacyLevel     string   `json:"privacy_level"`
-	PrivacyExceptIDs []string `json:"privacy_except_ids"`
-	FlagStatus       bool     `json:"flag_status"`
-	FlagColor        *string  `json:"flag_color"`
-	FlagName         *string  `json:"flag_name"`
-	DisplayOrder     int      `json:"display_order"`
 }
 
 type BatchTaskSubmissionResponse struct {
@@ -80,6 +40,52 @@ type TaskResponse struct {
 	DisplayOrder     int      `json:"display_order"`
 }
 
+// Updated TaskSubmissionRequest
+type TaskSubmissionRequest struct {
+	UserID           string   `json:"user_id"`
+	Name             string   `json:"name"`
+	Description      string   `json:"description"`
+	Deadline         *string  `json:"deadline"`
+	Author           string   `json:"author"`
+	Group            *string  `json:"group"`
+	GroupID          *string  `json:"group_id"`
+	AssignedTo       []string `json:"assigned_to"`
+	Difficulty       string   `json:"difficulty"`
+	CustomHours      *int     `json:"custom_hours"`
+	PrivacyLevel     string   `json:"privacy_level"`
+	PrivacyExceptIDs []string `json:"privacy_except_ids"`
+	FlagStatus       bool     `json:"flag_status"`
+	FlagColor        *string  `json:"flag_color"`
+	FlagName         *string  `json:"flag_name"`
+	DisplayOrder     int      `json:"display_order"`
+	ProofNeeded      bool     `json:"proof_needed"`
+	ProofDescription *string  `json:"proof_description"`
+	Token            string   `json:"token"`
+}
+
+type TaskSubmission struct {
+	Id               string   `json:"id"`
+	UserID           string   `json:"user_id"`
+	Name             string   `json:"name"`
+	Description      string   `json:"description"`
+	Deadline         *string  `json:"deadline"`
+	Author           string   `json:"author"`
+	Group            *string  `json:"group"`
+	GroupID          *string  `json:"group_id"`
+	AssignedTo       []string `json:"assigned_to"`
+	Difficulty       string   `json:"difficulty"`
+	CustomHours      *int     `json:"custom_hours"`
+	PrivacyLevel     string   `json:"privacy_level"`
+	PrivacyExceptIDs []string `json:"privacy_except_ids"`
+	FlagStatus       bool     `json:"flag_status"`
+	FlagColor        *string  `json:"flag_color"`
+	FlagName         *string  `json:"flag_name"`
+	DisplayOrder     int      `json:"display_order"`
+	ProofNeeded      bool     `json:"proof_needed"`
+	ProofDescription *string  `json:"proof_description"`
+}
+
+// Updated TaskUpdateRequest
 type TaskUpdateRequest struct {
 	ID               string   `json:"id"`
 	UserID           string   `json:"user_id"`
@@ -97,6 +103,8 @@ type TaskUpdateRequest struct {
 	FlagColor        *string  `json:"flag_color"`
 	FlagName         *string  `json:"flag_name"`
 	DisplayOrder     int      `json:"display_order"`
+	ProofNeeded      bool     `json:"proof_needed"`
+	ProofDescription *string  `json:"proof_description"`
 	Token            string   `json:"token"`
 }
 
