@@ -1,9 +1,11 @@
 package api
 
 import (
+	"os"
 	"taskape-rest-api/internal/api/handlers"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/logger"
 )
 
 func SetupRoutes(app *fiber.App, h *handlers.Handlers) {
@@ -36,4 +38,11 @@ func SetupRoutes(app *fiber.App, h *handlers.Handlers) {
 	app.Get("/events/:eventID/comments", h.Event.GetEventComments)
 	app.Post("/events/:eventID/comments", h.Event.AddEventComment)
 	app.Delete("/events/:eventID/comments/:commentID", h.Event.DeleteEventComment)
+
+	app.Use(logger.New(logger.Config{
+		Format:     "${time} ${method} ${path} - ${status} - ${latency}\n",
+		TimeFormat: "15:04:05",
+		TimeZone:   "Local",
+		Output:     os.Stdout,
+	}))
 }
