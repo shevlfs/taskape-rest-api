@@ -77,26 +77,32 @@ func (h *TaskHandler) GetUserTasks(c *fiber.Ctx) error {
 		}
 
 		tasks[i] = map[string]interface{}{
-			"id":                 task.Id,
-			"user_id":            task.UserId,
-			"name":               task.Name,
-			"description":        task.Description,
-			"created_at":         task.CreatedAt.AsTime().Format(time.RFC3339),
-			"deadline":           deadline,
-			"author":             task.Author,
-			"group":              task.Group,
-			"group_id":           task.GroupId,
-			"assigned_to":        task.AssignedTo,
-			"task_difficulty":    task.TaskDifficulty,
-			"custom_hours":       task.CustomHours,
-			"is_completed":       task.Completion.IsCompleted,
-			"proof_url":          task.Completion.ProofUrl,
-			"privacy_level":      task.Privacy.Level,
-			"privacy_except_ids": task.Privacy.ExceptIds,
-			"flag_status":        task.FlagStatus,
-			"flag_color":         task.FlagColor,
-			"flag_name":          task.FlagName,
-			"display_order":      task.DisplayOrder,
+			"id":                    task.Id,
+			"user_id":               task.UserId,
+			"name":                  task.Name,
+			"description":           task.Description,
+			"created_at":            task.CreatedAt.AsTime().Format(time.RFC3339),
+			"deadline":              deadline,
+			"author":                task.Author,
+			"group":                 task.Group,
+			"group_id":              task.GroupId,
+			"assigned_to":           task.AssignedTo,
+			"task_difficulty":       task.TaskDifficulty,
+			"custom_hours":          task.CustomHours,
+			"is_completed":          task.Completion.IsCompleted,
+			"proof_url":             task.Completion.ProofUrl,
+			"requires_confirmation": task.Completion.NeedsConfirmation,
+			"is_confirmed":          task.Completion.IsConfirmed,
+			"confirmation_user_id":  task.Completion.ConfirmationUserId,
+			"confirmed_at":          task.Completion.ConfirmedAt,
+			"privacy_level":         task.Privacy.Level,
+			"privacy_except_ids":    task.Privacy.ExceptIds,
+			"flag_status":           task.FlagStatus,
+			"flag_color":            task.FlagColor,
+			"flag_name":             task.FlagName,
+			"display_order":         task.DisplayOrder,
+			"proof_needed":          task.ProofNeeded,
+			"proof_description":     task.ProofDescription,
 		}
 	}
 
@@ -212,6 +218,7 @@ func (h *TaskHandler) ConfirmTaskCompletion(c *fiber.Ctx) error {
 	}
 
 	if !resp.Success {
+		log.Println("failed to confirm task completion", resp.Error)
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"success": false,
 			"message": resp.Error,
@@ -385,8 +392,10 @@ func (h *TaskHandler) SubmitTasksBatch(c *fiber.Ctx) error {
 			TaskDifficulty: taskSubmission.Difficulty,
 			CustomHours:    customHours,
 			Completion: &proto.CompletionStatus{
-				IsCompleted: false,
-				ProofUrl:    "",
+				IsCompleted:       taskSubmission.IsCompleted,
+				ProofUrl:          "",
+				NeedsConfirmation: taskSubmission.RequiresConfirmation,
+				IsConfirmed:       taskSubmission.IsConfirmed,
 			},
 			Privacy: &proto.PrivacySettings{
 				Level:     taskSubmission.PrivacyLevel,
@@ -492,8 +501,10 @@ func (h *TaskHandler) UpdateTask(c *fiber.Ctx) error {
 		TaskDifficulty: request.Difficulty,
 		CustomHours:    customHours,
 		Completion: &proto.CompletionStatus{
-			IsCompleted: request.IsCompleted,
-			ProofUrl:    request.ProofURL,
+			IsCompleted:       request.IsCompleted,
+			ProofUrl:          request.ProofURL,
+			NeedsConfirmation: request.RequiresConfirmation,
+			IsConfirmed:       request.IsConfirmed,
 		},
 		Privacy: &proto.PrivacySettings{
 			Level:     request.PrivacyLevel,
