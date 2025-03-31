@@ -8,6 +8,7 @@ github.com/gofiber/fiber/v2
 github.com/gofiber/fiber/v2/internal/schema
 github.com/gofiber/fiber/v2/log
 github.com/gofiber/fiber/v2/middleware/logger
+github.com/gofiber/fiber/v2/middleware/recover
 github.com/gofiber/fiber/v2/utils
 # github.com/golang/mock v1.6.0
 ## explicit; go 1.11

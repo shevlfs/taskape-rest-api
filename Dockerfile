@@ -21,7 +21,7 @@ WORKDIR /app
 COPY --from=builder /app/taskape-rest-api .
 
 # Expose port
-EXPOSE 8080
+EXPOSE 28524
 
 # Run the REST API
 CMD ["./taskape-rest-api"]
