@@ -48,6 +48,7 @@ type TaskSubmission struct {
 	Difficulty           string   `json:"difficulty"`
 	CustomHours          *int     `json:"custom_hours"`
 	PrivacyLevel         string   `json:"privacy_level"`
+	IsCompleted          bool     `json:"is_completed"`
 	PrivacyExceptIDs     []string `json:"privacy_except_ids"`
 	FlagStatus           bool     `json:"flag_status"`
 	FlagColor            *string  `json:"flag_color"`
