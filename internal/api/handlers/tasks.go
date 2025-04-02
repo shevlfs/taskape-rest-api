@@ -177,6 +177,7 @@ func (h *TaskHandler) SubmitTasksBatch(c *fiber.Ctx) error {
 				Level:     taskSubmission.PrivacyLevel,
 				ExceptIds: taskSubmission.PrivacyExceptIDs,
 			},
+			ProofNeeded:  taskSubmission.ProofNeeded,
 			FlagStatus:   taskSubmission.FlagStatus,
 			FlagColor:    flagColor,
 			FlagName:     flagName,
@@ -350,6 +351,11 @@ func (h *TaskHandler) UpdateTask(c *fiber.Ctx) error {
 		flagName = *request.FlagName
 	}
 
+	var proofDescription string
+	if request.ProofDescription != nil {
+		proofDescription = *request.ProofDescription
+	}
+
 	task := &proto.Task{
 		Id:             request.ID,
 		UserId:         request.UserID,
@@ -360,17 +366,20 @@ func (h *TaskHandler) UpdateTask(c *fiber.Ctx) error {
 		TaskDifficulty: request.Difficulty,
 		CustomHours:    customHours,
 		Completion: &proto.CompletionStatus{
-			IsCompleted: request.IsCompleted,
-			ProofUrl:    request.ProofURL,
+			IsCompleted:       request.IsCompleted,
+			ProofUrl:          request.ProofURL,
+			NeedsConfirmation: request.RequiresConfirmation,
 		},
 		Privacy: &proto.PrivacySettings{
 			Level:     request.PrivacyLevel,
 			ExceptIds: privacyExceptIds,
 		},
-		FlagStatus:   request.FlagStatus,
-		FlagColor:    flagColor,
-		FlagName:     flagName,
-		DisplayOrder: int32(request.DisplayOrder),
+		ProofNeeded:      request.ProofNeeded,
+		ProofDescription: proofDescription,
+		FlagStatus:       request.FlagStatus,
+		FlagColor:        flagColor,
+		FlagName:         flagName,
+		DisplayOrder:     int32(request.DisplayOrder),
 	}
 
 	resp, err := h.BackendClient.UpdateTask(ctx, &proto.UpdateTaskRequest{
@@ -510,8 +519,6 @@ func (h *TaskHandler) ConfirmTaskCompletion(c *fiber.Ctx) error {
 		"success": true,
 	})
 }
-
-// Add this to internal/api/handlers/tasks.go
 
 func (h *TaskHandler) GetUsersTasksBatch(c *fiber.Ctx) error {
 	var request dto.GetUsersTasksBatchRequest
