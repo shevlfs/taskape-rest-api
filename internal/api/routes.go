@@ -36,4 +36,16 @@ func SetupRoutes(app *fiber.App, h *handlers.Handlers) {
 	app.Get("/events/:eventID/comments", h.Event.GetEventComments)
 	app.Post("/events/:eventID/comments", h.Event.AddEventComment)
 	app.Delete("/events/:eventID/comments/:commentID", h.Event.DeleteEventComment)
+
+	app.Post("/getUsersBatch", h.User.GetUsersBatch)
+	app.Post("/getUsersTasksBatch", h.Task.GetUsersTasksBatch)
+	app.Post("/editUserProfile", h.User.EditUserProfile)
+
+	app.Get("/users/:userID/relatedEvents", h.Event.GetUserRelatedEvents)
+
+	app.Post("/createGroup", h.User.CreateGroup)
+	app.Get("/groups/:groupID/tasks", h.User.GetGroupTasks)
+	app.Post("/inviteToGroup", h.User.InviteToGroup)
+	app.Post("/acceptGroupInvite", h.User.AcceptGroupInvite)
+	app.Post("/kickUserFromGroup", h.User.KickUserFromGroup)
 }

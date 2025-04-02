@@ -510,3 +510,106 @@ func (h *TaskHandler) ConfirmTaskCompletion(c *fiber.Ctx) error {
 		"success": true,
 	})
 }
+
+// Add this to internal/api/handlers/tasks.go
+
+func (h *TaskHandler) GetUsersTasksBatch(c *fiber.Ctx) error {
+	var request dto.GetUsersTasksBatchRequest
+	if err := c.BodyParser(&request); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(dto.GetUsersTasksBatchResponse{
+			Success: false,
+			Message: "Invalid request format: " + err.Error(),
+		})
+	}
+
+	if len(request.UserIds) == 0 {
+		return c.Status(fiber.StatusBadRequest).JSON(dto.GetUsersTasksBatchResponse{
+			Success: false,
+			Message: "User IDs are required",
+		})
+	}
+
+	token := request.Token
+	if token == "" {
+		token = c.Get("Authorization")
+	}
+
+	if token == "" {
+		return c.Status(fiber.StatusUnauthorized).JSON(dto.GetUsersTasksBatchResponse{
+			Success: false,
+			Message: "Authorization token is required",
+		})
+	}
+
+	ctx := context.Background()
+	md := metadata.New(map[string]string{
+		"authorization": token,
+	})
+	ctx = metadata.NewOutgoingContext(ctx, md)
+
+	resp, err := h.BackendClient.GetUsersTasksBatch(ctx, &proto.GetUsersTasksBatchRequest{
+		UserIds:     request.UserIds,
+		RequesterId: request.RequesterId,
+	})
+
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(dto.GetUsersTasksBatchResponse{
+			Success: false,
+			Message: "Failed to fetch users tasks: " + err.Error(),
+		})
+	}
+
+	if !resp.Success {
+		return c.Status(fiber.StatusBadRequest).JSON(dto.GetUsersTasksBatchResponse{
+			Success: false,
+			Message: resp.Error,
+		})
+	}
+
+	// Convert gRPC response to REST DTO
+	userTasks := make(map[string][]dto.TaskResponse)
+
+	for userId, userTaskData := range resp.UserTasks {
+		tasks := make([]dto.TaskResponse, len(userTaskData.Tasks))
+
+		for i, task := range userTaskData.Tasks {
+			var deadline *string
+			if task.Deadline != nil {
+				deadlineStr := task.Deadline.AsTime().Format(time.RFC3339)
+				deadline = &deadlineStr
+			}
+
+			tasks[i] = dto.TaskResponse{
+				ID:                   task.Id,
+				UserID:               task.UserId,
+				Name:                 task.Name,
+				Description:          task.Description,
+				CreatedAt:            task.CreatedAt.AsTime().Format(time.RFC3339),
+				Deadline:             deadline,
+				Author:               task.Author,
+				Group:                task.Group,
+				GroupID:              task.GroupId,
+				AssignedTo:           task.AssignedTo,
+				TaskDifficulty:       task.TaskDifficulty,
+				CustomHours:          int(task.CustomHours),
+				IsCompleted:          task.Completion.IsCompleted,
+				ProofURL:             task.Completion.ProofUrl,
+				PrivacyLevel:         task.Privacy.Level,
+				PrivacyExceptIDs:     task.Privacy.ExceptIds,
+				FlagStatus:           task.FlagStatus,
+				FlagColor:            &task.FlagColor,
+				FlagName:             &task.FlagName,
+				DisplayOrder:         int(task.DisplayOrder),
+				RequiresConfirmation: task.Completion.NeedsConfirmation,
+				IsConfirmed:          task.Completion.IsConfirmed,
+			}
+		}
+
+		userTasks[userId] = tasks
+	}
+
+	return c.Status(fiber.StatusOK).JSON(dto.GetUsersTasksBatchResponse{
+		Success:   true,
+		UserTasks: userTasks,
+	})
+}

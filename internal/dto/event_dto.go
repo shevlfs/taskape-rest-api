@@ -81,3 +81,15 @@ type DeleteEventCommentResponse struct {
 	Success bool   `json:"success"`
 	Message string `json:"message"`
 }
+
+type GetUserRelatedEventsRequest struct {
+	Limit          int    `json:"limit"`
+	IncludeExpired bool   `json:"include_expired"`
+	Token          string `json:"token"`
+}
+
+type GetUserRelatedEventsResponse struct {
+	Success bool            `json:"success"`
+	Events  []EventResponse `json:"events"`
+	Message string          `json:"message,omitempty"`
+}

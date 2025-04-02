@@ -58,26 +58,28 @@ type BatchTaskSubmissionResponse struct {
 }
 
 type TaskResponse struct {
-	ID               string   `json:"id"`
-	UserID           string   `json:"user_id"`
-	Name             string   `json:"name"`
-	Description      string   `json:"description"`
-	CreatedAt        string   `json:"created_at"`
-	Deadline         *string  `json:"deadline,omitempty"`
-	Author           string   `json:"author"`
-	Group            string   `json:"group,omitempty"`
-	GroupID          string   `json:"group_id,omitempty"`
-	AssignedTo       []string `json:"assigned_to"`
-	TaskDifficulty   string   `json:"task_difficulty"`
-	CustomHours      int      `json:"custom_hours,omitempty"`
-	IsCompleted      bool     `json:"is_completed"`
-	ProofURL         string   `json:"proof_url,omitempty"`
-	PrivacyLevel     string   `json:"privacy_level"`
-	PrivacyExceptIDs []string `json:"privacy_except_ids"`
-	FlagStatus       bool     `json:"flag_status"`
-	FlagColor        *string  `json:"flag_color,omitempty"`
-	FlagName         *string  `json:"flag_name,omitempty"`
-	DisplayOrder     int      `json:"display_order"`
+	ID                   string   `json:"id"`
+	UserID               string   `json:"user_id"`
+	Name                 string   `json:"name"`
+	Description          string   `json:"description"`
+	CreatedAt            string   `json:"created_at"`
+	Deadline             *string  `json:"deadline,omitempty"`
+	Author               string   `json:"author"`
+	Group                string   `json:"group,omitempty"`
+	GroupID              string   `json:"group_id,omitempty"`
+	AssignedTo           []string `json:"assigned_to"`
+	TaskDifficulty       string   `json:"task_difficulty"`
+	CustomHours          int      `json:"custom_hours,omitempty"`
+	IsCompleted          bool     `json:"is_completed"`
+	ProofURL             string   `json:"proof_url,omitempty"`
+	PrivacyLevel         string   `json:"privacy_level"`
+	PrivacyExceptIDs     []string `json:"privacy_except_ids"`
+	FlagStatus           bool     `json:"flag_status"`
+	FlagColor            *string  `json:"flag_color,omitempty"`
+	FlagName             *string  `json:"flag_name,omitempty"`
+	DisplayOrder         int      `json:"display_order"`
+	RequiresConfirmation bool     `json:"requires_confirmation"`
+	IsConfirmed          bool     `json:"is_confirmed"`
 }
 
 type TaskUpdateRequest struct {

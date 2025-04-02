@@ -70,7 +70,7 @@ func (h *EventHandler) GetUserEvents(c *fiber.Ctx) error {
 	for i, event := range resp.Events {
 		events[i] = convertToEventResponse(event)
 	}
-    println("giving out events, count:", len(events))
+	println("giving out events, count:", len(events))
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{
 		"success": true,
 		"events":  events,
@@ -454,4 +454,76 @@ func convertEventSizeToString(eventSize proto.EventSize) string {
 	default:
 		return "medium"
 	}
+}
+
+func (h *EventHandler) GetUserRelatedEvents(c *fiber.Ctx) error {
+	targetUserID := c.Params("userID")
+	if targetUserID == "" {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"success": false,
+			"message": "User ID is required",
+			"events":  []interface{}{},
+		})
+	}
+
+	requesterID := c.Query("requester_id", "")
+	if requesterID == "" {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"success": false,
+			"message": "requester_id query parameter is required",
+			"events":  []interface{}{},
+		})
+	}
+
+	token := c.Get("Authorization")
+	if token == "" {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+			"success": false,
+			"message": "Authorization token is required",
+			"events":  []interface{}{},
+		})
+	}
+
+	limit, _ := strconv.Atoi(c.Query("limit", "50"))
+	includeExpired := c.Query("include_expired", "false") == "true"
+
+	ctx := context.Background()
+	md := metadata.New(map[string]string{
+		"authorization": token,
+	})
+	ctx = metadata.NewOutgoingContext(ctx, md)
+
+	resp, err := h.BackendClient.GetUserRelatedEvents(ctx, &proto.GetUserRelatedEventsRequest{
+		TargetUserId:   targetUserID,
+		RequesterId:    requesterID,
+		Limit:          int32(limit),
+		IncludeExpired: includeExpired,
+	})
+
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"success": false,
+			"message": "Failed to fetch events: " + err.Error(),
+			"events":  []interface{}{},
+		})
+	}
+
+	if !resp.Success {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"success": false,
+			"message": resp.Error,
+			"events":  []interface{}{},
+		})
+	}
+
+	events := make([]dto.EventResponse, len(resp.Events))
+	for i, event := range resp.Events {
+		events[i] = convertToEventResponse(event)
+	}
+
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"success": true,
+		"events":  events,
+		"message": nil,
+	})
 }
