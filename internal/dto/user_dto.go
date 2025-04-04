@@ -45,7 +45,7 @@ type GetUsersBatchResponse struct {
 	Message string         `json:"message,omitempty"`
 }
 
-// For getUsersTasksBatch
+
 type GetUsersTasksBatchRequest struct {
 	UserIds     []string `json:"user_ids"`
 	RequesterId string   `json:"requester_id"`
@@ -58,7 +58,7 @@ type GetUsersTasksBatchResponse struct {
 	Message   string                    `json:"message,omitempty"`
 }
 
-// For editUserProfile
+
 type EditUserProfileRequest struct {
 	UserId         string `json:"user_id"`
 	Handle         string `json:"handle"`
@@ -73,7 +73,7 @@ type EditUserProfileResponse struct {
 	Message string `json:"message,omitempty"`
 }
 
-// For createGroup
+
 type CreateGroupRequest struct {
 	CreatorId   string `json:"creator_id"`
 	GroupName   string `json:"group_name"`
@@ -88,7 +88,7 @@ type CreateGroupResponse struct {
 	Message string `json:"message,omitempty"`
 }
 
-// For getGroupTasks
+
 type GetGroupTasksRequest struct {
 	RequesterId string `json:"requester_id"`
 	Token       string `json:"token"`
@@ -100,7 +100,7 @@ type GetGroupTasksResponse struct {
 	Message string         `json:"message,omitempty"`
 }
 
-// For inviteToGroup
+
 type InviteToGroupRequest struct {
 	GroupId   string `json:"group_id"`
 	InviterId string `json:"inviter_id"`
@@ -114,7 +114,7 @@ type InviteToGroupResponse struct {
 	Message  string `json:"message,omitempty"`
 }
 
-// For acceptGroupInvite
+
 type AcceptGroupInviteRequest struct {
 	InviteId string `json:"invite_id"`
 	UserId   string `json:"user_id"`
@@ -137,4 +137,13 @@ type KickUserFromGroupRequest struct {
 type KickUserFromGroupResponse struct {
 	Success bool   `json:"success"`
 	Message string `json:"message,omitempty"`
+}
+
+type UserStreakResponse struct {
+	Success           bool    `json:"success"`
+	CurrentStreak     int32   `json:"current_streak"`
+	LongestStreak     int32   `json:"longest_streak"`
+	LastCompletedDate *string `json:"last_completed_date,omitempty"`
+	StreakStartDate   *string `json:"streak_start_date,omitempty"`
+	Message           string  `json:"message,omitempty"`
 }

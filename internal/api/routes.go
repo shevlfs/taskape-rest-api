@@ -48,4 +48,6 @@ func SetupRoutes(app *fiber.App, h *handlers.Handlers) {
 	app.Post("/inviteToGroup", h.User.InviteToGroup)
 	app.Post("/acceptGroupInvite", h.User.AcceptGroupInvite)
 	app.Post("/kickUserFromGroup", h.User.KickUserFromGroup)
+
+	app.Get("/users/:userID/streak", h.User.GetUserStreak)
 }

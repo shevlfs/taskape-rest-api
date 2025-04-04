@@ -575,7 +575,7 @@ func (h *TaskHandler) GetUsersTasksBatch(c *fiber.Ctx) error {
 		})
 	}
 
-	// Convert gRPC response to REST DTO
+	
 	userTasks := make(map[string][]dto.TaskResponse)
 
 	for userId, userTaskData := range resp.UserTasks {

@@ -157,7 +157,7 @@ func (h *UserHandler) RegisterNewProfile(c *fiber.Ctx) error {
 	})
 }
 
-// Add these to internal/api/handlers/users.go
+
 
 func (h *UserHandler) GetUsersBatch(c *fiber.Ctx) error {
 	var request dto.GetUsersBatchRequest
@@ -207,7 +207,7 @@ func (h *UserHandler) GetUsersBatch(c *fiber.Ctx) error {
 		})
 	}
 
-	// Convert gRPC response to REST DTO
+	
 	users := make([]dto.UserResponse, len(resp.Users))
 	for i, user := range resp.Users {
 		users[i] = dto.UserResponse{
@@ -383,7 +383,7 @@ func (h *UserHandler) GetGroupTasks(c *fiber.Ctx) error {
 		})
 	}
 
-	// Convert proto tasks to DTO format
+	
 	tasks := make([]dto.TaskResponse, len(resp.Tasks))
 	for i, task := range resp.Tasks {
 		var deadline *string
@@ -587,5 +587,67 @@ func (h *UserHandler) KickUserFromGroup(c *fiber.Ctx) error {
 
 	return c.Status(fiber.StatusOK).JSON(dto.KickUserFromGroupResponse{
 		Success: true,
+	})
+}
+
+func (h *UserHandler) GetUserStreak(c *fiber.Ctx) error {
+	userID := c.Params("userID")
+	if userID == "" {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"success": false,
+			"message": "User ID is required",
+		})
+	}
+
+	token := c.Get("Authorization")
+	if token == "" {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+			"success": false,
+			"message": "Authorization token is required",
+		})
+	}
+
+	ctx := context.Background()
+	md := metadata.New(map[string]string{
+		"authorization": token,
+	})
+	ctx = metadata.NewOutgoingContext(ctx, md)
+
+	resp, err := h.BackendClient.GetUserStreak(ctx, &proto.GetUserStreakRequest{
+		UserId: userID,
+	})
+
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"success": false,
+			"message": "Failed to fetch user streak: " + err.Error(),
+		})
+	}
+
+	if !resp.Success {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"success": false,
+			"message": resp.Error,
+		})
+	}
+
+	
+	var lastCompletedDate, streakStartDate *string
+	if resp.Streak.LastCompletedDate != nil {
+		dateStr := resp.Streak.LastCompletedDate.AsTime().Format(time.RFC3339)
+		lastCompletedDate = &dateStr
+	}
+
+	if resp.Streak.StreakStartDate != nil {
+		dateStr := resp.Streak.StreakStartDate.AsTime().Format(time.RFC3339)
+		streakStartDate = &dateStr
+	}
+
+	return c.Status(fiber.StatusOK).JSON(dto.UserStreakResponse{
+		Success:           true,
+		CurrentStreak:     resp.Streak.CurrentStreak,
+		LongestStreak:     resp.Streak.LongestStreak,
+		LastCompletedDate: lastCompletedDate,
+		StreakStartDate:   streakStartDate,
 	})
 }

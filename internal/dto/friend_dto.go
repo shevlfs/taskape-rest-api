@@ -50,7 +50,7 @@ type SendFriendRequestResponse struct {
 type RespondToFriendRequestRequest struct {
 	RequestID string `json:"request_id"`
 	UserID    string `json:"user_id"`
-	Response  string `json:"response"` // "accept" or "reject"
+	Response  string `json:"response"` 
 	Token     string `json:"token"`
 }
 
