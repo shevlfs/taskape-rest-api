@@ -41,6 +41,14 @@ func (h *AuthHandler) SendVerificationCode(c *fiber.Ctx) error {
 	return c.SendStatus(fiber.StatusOK)
 }
 
+const (
+	DEV_CODE = "111111"
+)
+
+const (
+	DEV_ENV = "development"
+)
+
 func (h *AuthHandler) CheckVerificationCode(c *fiber.Ctx) error {
 	var request dto.CheckCodeRequest
 	if err := c.BodyParser(&request); err != nil {
@@ -53,7 +61,7 @@ func (h *AuthHandler) CheckVerificationCode(c *fiber.Ctx) error {
 	if phone == "" || code == "" {
 		return c.Status(fiber.StatusBadRequest).SendString("Phone number and code are required")
 	}
-	if h.Config.Environment == "development" || code == "111111" {
+	if h.Config.Environment == DEV_ENV || code == DEV_CODE {
 
 		response, err := h.BackendClient.LoginNewUser(context.Background(), &proto.NewUserLoginRequest{
 			Phone: phone,
@@ -70,7 +78,6 @@ func (h *AuthHandler) CheckVerificationCode(c *fiber.Ctx) error {
 			UserId:        response.UserId,
 		})
 	}
-
 
 	return c.Status(fiber.StatusBadRequest).SendString("Invalid verification code")
 }

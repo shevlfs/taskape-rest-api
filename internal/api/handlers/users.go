@@ -157,8 +157,6 @@ func (h *UserHandler) RegisterNewProfile(c *fiber.Ctx) error {
 	})
 }
 
-
-
 func (h *UserHandler) GetUsersBatch(c *fiber.Ctx) error {
 	var request dto.GetUsersBatchRequest
 	if err := c.BodyParser(&request); err != nil {
@@ -207,7 +205,6 @@ func (h *UserHandler) GetUsersBatch(c *fiber.Ctx) error {
 		})
 	}
 
-	
 	users := make([]dto.UserResponse, len(resp.Users))
 	for i, user := range resp.Users {
 		users[i] = dto.UserResponse{
@@ -383,7 +380,6 @@ func (h *UserHandler) GetGroupTasks(c *fiber.Ctx) error {
 		})
 	}
 
-	
 	tasks := make([]dto.TaskResponse, len(resp.Tasks))
 	for i, task := range resp.Tasks {
 		var deadline *string
@@ -631,7 +627,6 @@ func (h *UserHandler) GetUserStreak(c *fiber.Ctx) error {
 		})
 	}
 
-	
 	var lastCompletedDate, streakStartDate *string
 	if resp.Streak.LastCompletedDate != nil {
 		dateStr := resp.Streak.LastCompletedDate.AsTime().Format(time.RFC3339)
@@ -649,5 +644,70 @@ func (h *UserHandler) GetUserStreak(c *fiber.Ctx) error {
 		LongestStreak:     resp.Streak.LongestStreak,
 		LastCompletedDate: lastCompletedDate,
 		StreakStartDate:   streakStartDate,
+	})
+}
+
+func (h *UserHandler) GetUserGroups(c *fiber.Ctx) error {
+	userID := c.Params("userID")
+	if userID == "" {
+		return c.Status(fiber.StatusBadRequest).JSON(dto.GetUserGroupsResponse{
+			Success: false,
+			Groups:  nil,
+			Message: "User ID is required",
+		})
+	}
+
+	token := c.Get("Authorization")
+	if token == "" {
+		return c.Status(fiber.StatusUnauthorized).JSON(dto.GetUserGroupsResponse{
+			Success: false,
+			Groups:  nil,
+			Message: "Authorization token is required",
+		})
+	}
+
+	ctx := context.Background()
+	md := metadata.New(map[string]string{
+		"authorization": token,
+	})
+	ctx = metadata.NewOutgoingContext(ctx, md)
+
+	resp, err := h.BackendClient.GetUserGroups(ctx, &proto.GetUserGroupsRequest{
+		UserId: userID,
+	})
+
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(dto.GetUserGroupsResponse{
+			Success: false,
+			Groups:  nil,
+			Message: "Failed to fetch user groups: " + err.Error(),
+		})
+	}
+
+	if !resp.Success {
+		return c.Status(fiber.StatusBadRequest).JSON(dto.GetUserGroupsResponse{
+			Success: false,
+			Groups:  nil,
+			Message: resp.Error,
+		})
+	}
+
+	groups := make([]dto.GroupResponse, len(resp.Groups))
+	for i, group := range resp.Groups {
+		groups[i] = dto.GroupResponse{
+			ID:          group.Id,
+			Name:        group.Name,
+			Description: group.Description,
+			Color:       group.Color,
+			CreatorID:   group.CreatorId,
+			CreatedAt:   group.CreatedAt.AsTime().Format(time.RFC3339),
+			Members:     group.Members,
+			Admins:      group.Admins,
+		}
+	}
+
+	return c.Status(fiber.StatusOK).JSON(dto.GetUserGroupsResponse{
+		Success: true,
+		Groups:  groups,
 	})
 }

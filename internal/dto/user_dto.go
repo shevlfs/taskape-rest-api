@@ -45,7 +45,6 @@ type GetUsersBatchResponse struct {
 	Message string         `json:"message,omitempty"`
 }
 
-
 type GetUsersTasksBatchRequest struct {
 	UserIds     []string `json:"user_ids"`
 	RequesterId string   `json:"requester_id"`
@@ -57,7 +56,6 @@ type GetUsersTasksBatchResponse struct {
 	UserTasks map[string][]TaskResponse `json:"user_tasks"`
 	Message   string                    `json:"message,omitempty"`
 }
-
 
 type EditUserProfileRequest struct {
 	UserId         string `json:"user_id"`
@@ -73,7 +71,6 @@ type EditUserProfileResponse struct {
 	Message string `json:"message,omitempty"`
 }
 
-
 type CreateGroupRequest struct {
 	CreatorId   string `json:"creator_id"`
 	GroupName   string `json:"group_name"`
@@ -88,7 +85,6 @@ type CreateGroupResponse struct {
 	Message string `json:"message,omitempty"`
 }
 
-
 type GetGroupTasksRequest struct {
 	RequesterId string `json:"requester_id"`
 	Token       string `json:"token"`
@@ -99,7 +95,6 @@ type GetGroupTasksResponse struct {
 	Tasks   []TaskResponse `json:"tasks"`
 	Message string         `json:"message,omitempty"`
 }
-
 
 type InviteToGroupRequest struct {
 	GroupId   string `json:"group_id"`
@@ -113,7 +108,6 @@ type InviteToGroupResponse struct {
 	InviteId string `json:"invite_id,omitempty"`
 	Message  string `json:"message,omitempty"`
 }
-
 
 type AcceptGroupInviteRequest struct {
 	InviteId string `json:"invite_id"`
@@ -146,4 +140,21 @@ type UserStreakResponse struct {
 	LastCompletedDate *string `json:"last_completed_date,omitempty"`
 	StreakStartDate   *string `json:"streak_start_date,omitempty"`
 	Message           string  `json:"message,omitempty"`
+}
+
+type GroupResponse struct {
+	ID          string   `json:"id"`
+	Name        string   `json:"name"`
+	Description string   `json:"description"`
+	Color       string   `json:"color"`
+	CreatorID   string   `json:"creator_id"`
+	CreatedAt   string   `json:"created_at"`
+	Members     []string `json:"members"`
+	Admins      []string `json:"admins"`
+}
+
+type GetUserGroupsResponse struct {
+	Success bool            `json:"success"`
+	Groups  []GroupResponse `json:"groups"`
+	Message string          `json:"message,omitempty"`
 }

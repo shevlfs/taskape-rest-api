@@ -575,7 +575,6 @@ func (h *TaskHandler) GetUsersTasksBatch(c *fiber.Ctx) error {
 		})
 	}
 
-	
 	userTasks := make(map[string][]dto.TaskResponse)
 
 	for userId, userTaskData := range resp.UserTasks {
