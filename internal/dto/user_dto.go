@@ -158,3 +158,18 @@ type GetUserGroupsResponse struct {
 	Groups  []GroupResponse `json:"groups"`
 	Message string          `json:"message,omitempty"`
 }
+
+type GroupInvitation struct {
+	ID            string `json:"id"`
+	GroupID       string `json:"group_id"`
+	GroupName     string `json:"group_name"`
+	InviterID     string `json:"inviter_id"`
+	InviterHandle string `json:"inviter_handle"`
+	CreatedAt     string `json:"created_at"`
+}
+
+type GetGroupInvitationsResponse struct {
+	Success     bool              `json:"success"`
+	Invitations []GroupInvitation `json:"invitations"`
+	Message     string            `json:"message,omitempty"`
+}

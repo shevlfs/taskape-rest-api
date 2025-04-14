@@ -711,3 +711,55 @@ func (h *UserHandler) GetUserGroups(c *fiber.Ctx) error {
 		Groups:  groups,
 	})
 }
+
+func (h *UserHandler) GetGroupInvitations(c *fiber.Ctx) error {
+	userID := c.Params("userID")
+	if userID == "" {
+		return c.Status(fiber.StatusBadRequest).JSON(dto.GetGroupInvitationsResponse{
+			Success: false,
+			Message: "User ID is required",
+		})
+	}
+
+	token := c.Get("Authorization")
+	if token == "" {
+		return c.Status(fiber.StatusUnauthorized).JSON(dto.GetGroupInvitationsResponse{
+			Success: false,
+			Message: "Authorization token is required",
+		})
+	}
+
+	ctx := context.Background()
+	md := metadata.New(map[string]string{
+		"authorization": token,
+	})
+	ctx = metadata.NewOutgoingContext(ctx, md)
+
+	resp, err := h.BackendClient.GetGroupInvitations(ctx, &proto.GetGroupInvitationsRequest{
+		UserId: userID,
+	})
+
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(dto.GetGroupInvitationsResponse{
+			Success: false,
+			Message: "Failed to get group invitations: " + err.Error(),
+		})
+	}
+
+	invitations := make([]dto.GroupInvitation, len(resp.Invitations))
+	for i, inv := range resp.Invitations {
+		invitations[i] = dto.GroupInvitation{
+			ID:            inv.Id,
+			GroupID:       inv.GroupId,
+			GroupName:     inv.GroupName,
+			InviterID:     inv.InviterId,
+			InviterHandle: inv.InviterHandle,
+			CreatedAt:     inv.CreatedAt.AsTime().Format(time.RFC3339),
+		}
+	}
+
+	return c.Status(fiber.StatusOK).JSON(dto.GetGroupInvitationsResponse{
+		Success:     true,
+		Invitations: invitations,
+	})
+}
