@@ -22,6 +22,7 @@ func SetupRoutes(app *fiber.App, h *handlers.Handlers) {
 	app.Get("/users/:userID/tasks", h.Task.GetUserTasks)
 	app.Post("/updateTask", h.Task.UpdateTask)
 	app.Post("/updateTaskOrder", h.Task.UpdateTaskOrder)
+	app.Post("/confirmTaskCompletion", h.Task.ConfirmTaskCompletion)
 
 	app.Post("/searchUsers", h.Friend.SearchUsers)
 	app.Post("/sendFriendRequest", h.Friend.SendFriendRequest)
